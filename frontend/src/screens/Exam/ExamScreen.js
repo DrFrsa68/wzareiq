@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView,
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
+import { submitExam } from '../../services/examService';
 import ImageUploader from '../../components/ImageUploader';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
@@ -88,19 +89,15 @@ export default function ExamScreen({ route, navigation }) {
   const doSubmit = async () => {
     clearInterval(timerRef.current);
     setSubmitting(true);
+    const sid = sessionIdRef.current || sessionId;
+    console.log('doSubmit called, sid:', sid);
     try {
-      const token = await AsyncStorage.getItem('token');
-      const sid = sessionIdRef.current;
-      const res = await fetch(`${API_URL}/sessions/${sid}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      console.log('Submit result:', JSON.stringify(data).slice(0, 100));
+      const data = await submitExam(sid);
+      console.log('Submit success:', data?.total_score);
       navigation.navigate('Results', { result: data, session_id: sid });
     } catch (err) {
       console.log('Submit error:', err.message);
-      Alert.alert('خطأ', err.message);
+      Alert.alert('خطأ في التسليم', err.message);
       setSubmitting(false);
     }
   };
