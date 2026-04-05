@@ -114,7 +114,7 @@ export default function ExamScreen({ route, navigation }) {
       const text = await res.text();
       const data = JSON.parse(text);
       showToast('تم التسليم! جاري عرض النتيجة...', 'success');
-      setTimeout(() => setExamResult(data), 1500);
+      setExamResult(data);
     } catch (err) {
       showToast('خطأ: ' + err.message, 'error');
       setSubmitting(false);
