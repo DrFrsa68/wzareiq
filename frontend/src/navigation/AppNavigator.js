@@ -6,11 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
-// Auth Screens
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
-
-// Main Screens
 import HomeScreen from '../screens/Home/HomeScreen';
 import SubjectsScreen from '../screens/Subjects/SubjectsScreen';
 import ExamSearchScreen from '../screens/Subjects/ExamSearchScreen';
@@ -18,6 +15,8 @@ import ExamScreen from '../screens/Exam/ExamScreen';
 import ResultsScreen from '../screens/Results/ResultsScreen';
 import HistoryScreen from '../screens/History/HistoryScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
+import AdminScreen from '../screens/Admin/AdminScreen';
+import AdminAddExamScreen from '../screens/Admin/AdminAddExamScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -51,7 +50,17 @@ function HistoryStack() {
   );
 }
 
+function AdminStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="AdminMain" component={AdminScreen} />
+      <Stack.Screen name="AdminAddExam" component={AdminAddExamScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function MainTabs() {
+  const { user } = useAuth();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -70,12 +79,13 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#4F46E5',
         tabBarInactiveTintColor: '#bbb',
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           const icons = {
             Home: focused ? 'home' : 'home-outline',
             Subjects: focused ? 'book' : 'book-outline',
             History: focused ? 'time' : 'time-outline',
             Profile: focused ? 'person' : 'person-outline',
+            Admin: focused ? 'settings' : 'settings-outline',
           };
           return <Ionicons name={icons[route.name]} size={24} color={color} />;
         },
@@ -85,6 +95,9 @@ function MainTabs() {
       <Tab.Screen name="Subjects" component={SubjectsStack} options={{ title: 'المواد' }} />
       <Tab.Screen name="History" component={HistoryStack} options={{ title: 'السجل' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'حسابي' }} />
+      {user?.role === 'admin' && (
+        <Tab.Screen name="Admin" component={AdminStack} options={{ title: 'الإدارة' }} />
+      )}
     </Tab.Navigator>
   );
 }
@@ -100,13 +113,11 @@ function AuthStack() {
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
-
   if (loading) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <ActivityIndicator size="large" color="#4F46E5" />
     </View>
   );
-
   return (
     <NavigationContainer>
       {user ? <MainTabs /> : <AuthStack />}

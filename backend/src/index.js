@@ -18,6 +18,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/subjects', require('./routes/subjects'));
 app.use('/api/exams', require('./routes/exams'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/sessions', require('./routes/sessions'));
 
 app.listen(PORT, () => {
