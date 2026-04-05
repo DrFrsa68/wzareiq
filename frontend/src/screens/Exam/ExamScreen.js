@@ -94,6 +94,10 @@ export default function ExamScreen({ route, navigation }) {
     try {
       const data = await submitExam(sid);
       console.log('Submit success:', data?.total_score);
+      // حفظ النتيجة مؤقتاً
+      if (typeof window !== 'undefined') {
+        window.__examResult = { result: data, session_id: sid };
+      }
       navigation.replace('Results', { result: data, session_id: sid });
     } catch (err) {
       console.log('Submit error:', err.message);

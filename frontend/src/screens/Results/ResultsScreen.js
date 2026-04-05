@@ -12,6 +12,14 @@ export default function ResultsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(!result);
 
   useEffect(() => {
+    // جرب تقرأ النتيجة من window أولاً
+    if (!result && typeof window !== 'undefined' && window.__examResult) {
+      const cached = window.__examResult;
+      window.__examResult = null;
+      setData(cached.result);
+      setLoading(false);
+      return;
+    }
     if (!result && session_id) loadSession();
   }, []);
 
