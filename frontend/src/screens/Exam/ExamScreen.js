@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ScrollView, KeyboardAvoidingView,
-  Platform, ActivityIndicator
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
@@ -20,11 +16,11 @@ export default function ExamScreen({ route, navigation }) {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [answerMode, setAnswerMode] = useState({});
   const timerRef = useRef(null);
+  const sessionIdRef = useRef(null);
 
   useEffect(() => { initExam(); return () => clearInterval(timerRef.current); }, []);
 
@@ -32,20 +28,13 @@ export default function ExamScreen({ route, navigation }) {
     if (!loading) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
-          if (prev <= 1) { clearInterval(timerRef.current); submitExam(); return 0; }
+          if (prev <= 1) { clearInterval(timerRef.current); doSubmit(); return 0; }
           return prev - 1;
         });
       }, 1000);
     }
     return () => clearInterval(timerRef.current);
-  }, [loading, sessionId]);
-
-  // اذا وصلت النتيجة انتقل للصفحة
-  useEffect(() => {
-    if (submitResult) {
-      navigation.reset({ index: 0, routes: [{ name: 'Results', params: { result: submitResult, session_id: sessionId } }] });
-    }
-  }, [submitResult]);
+  }, [loading]);
 
   const initExam = async () => {
     try {
@@ -53,6 +42,7 @@ export default function ExamScreen({ route, navigation }) {
         sessionsAPI.start(exam.id),
         examsAPI.getQuestions(exam.id)
       ]);
+      sessionIdRef.current = sessionRes.data.session_id;
       setSessionId(sessionRes.data.session_id);
       setQuestions(questionsRes.data);
     } catch (err) {
@@ -63,10 +53,8 @@ export default function ExamScreen({ route, navigation }) {
 
   const saveAnswer = async (questionId, text) => {
     setAnswers(prev => ({ ...prev, [questionId]: text }));
-    if (sessionId) {
-      try { await sessionsAPI.saveAnswer(sessionId, { question_id: questionId, answer_text: text }); }
-      catch (err) { console.log(err); }
-    }
+    try { await sessionsAPI.saveAnswer(sessionIdRef.current, { question_id: questionId, answer_text: text }); }
+    catch (err) { console.log(err); }
   };
 
   const uploadImage = async (questionId, asset) => {
@@ -80,10 +68,8 @@ export default function ExamScreen({ route, navigation }) {
         formData.append('image', { uri: asset.uri, type: 'image/jpeg', name: 'answer.jpg' });
       }
       formData.append('question_id', questionId);
-      const res = await fetch(`${API_URL}/sessions/${sessionId}/answer-image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+      const res = await fetch(`${API_URL}/sessions/${sessionIdRef.current}/answer-image`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData,
       });
       const data = await res.json();
       if (data.image_url) {
@@ -99,19 +85,22 @@ export default function ExamScreen({ route, navigation }) {
     setAnswers(prev => { const n = {...prev}; delete n[questionId]; return n; });
   };
 
-  const submitExam = async () => {
+  const doSubmit = async () => {
     clearInterval(timerRef.current);
     setSubmitting(true);
     try {
       const token = await AsyncStorage.getItem('token');
-      const res = await fetch(`${API_URL}/sessions/${sessionId}/submit`, {
+      const sid = sessionIdRef.current;
+      const res = await fetch(`${API_URL}/sessions/${sid}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setSubmitResult(data);
+      console.log('Submit result:', JSON.stringify(data).slice(0, 100));
+      navigation.navigate('Results', { result: data, session_id: sid });
     } catch (err) {
-      Alert.alert('خطأ', 'تعذر تسليم الامتحان');
+      console.log('Submit error:', err.message);
+      Alert.alert('خطأ', err.message);
       setSubmitting(false);
     }
   };
@@ -119,7 +108,7 @@ export default function ExamScreen({ route, navigation }) {
   const handleSubmit = () => {
     Alert.alert('تسليم الامتحان', 'هل أنت متأكد؟', [
       { text: 'إلغاء', style: 'cancel' },
-      { text: 'تسليم', onPress: submitExam }
+      { text: 'تسليم', onPress: doSubmit }
     ]);
   };
 
@@ -145,7 +134,7 @@ export default function ExamScreen({ route, navigation }) {
   if (submitting) return (
     <View style={styles.center}>
       <ActivityIndicator size="large" color="#10B981" />
-      <Text style={styles.loadingText}>جاري التصحيح بالذكاء الاصطناعي...</Text>
+      <Text style={styles.loadingText}>جاري التصحيح...</Text>
       <Text style={styles.loadingSubText}>قد يستغرق دقيقة</Text>
     </View>
   );
@@ -205,7 +194,6 @@ export default function ExamScreen({ route, navigation }) {
             placeholderTextColor="#aaa" multiline textAlign="right"
             value={answers[q?.id] || ''} onChangeText={(text) => saveAnswer(q?.id, text)} />
         )}
-
         <View style={{ height: 20 }} />
       </ScrollView>
 
