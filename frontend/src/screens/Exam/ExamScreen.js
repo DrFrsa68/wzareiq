@@ -20,6 +20,7 @@ export default function ExamScreen({ route, navigation }) {
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [answerMode, setAnswerMode] = useState({});
+  const [examResult, setExamResult] = useState(null);
   const timerRef = useRef(null);
   const sessionIdRef = useRef(null);
 
@@ -94,11 +95,8 @@ export default function ExamScreen({ route, navigation }) {
     try {
       const data = await submitExam(sid);
       console.log('Submit success:', data?.total_score);
-      // حفظ النتيجة مؤقتاً
-      if (typeof window !== 'undefined') {
-        window.__examResult = { result: data, session_id: sid };
-      }
-      navigation.replace('Results', { result: data, session_id: sid });
+      setExamResult(data);
+      setSubmitting(false);
     } catch (err) {
       console.log('Submit error:', err.message);
       Alert.alert('خطأ في التسليم', err.message);
@@ -131,6 +129,61 @@ export default function ExamScreen({ route, navigation }) {
       <Text style={styles.loadingText}>جاري تحميل الامتحان...</Text>
     </View>
   );
+
+  // عرض النتيجة داخل نفس الشاشة
+  if (examResult) {
+    const pct = Math.round((examResult.total_score / examResult.max_score) * 100);
+    const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#EF4444';
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: '#F5F5F7' }}>
+        <View style={{ backgroundColor: color, paddingTop: 60, paddingBottom: 32, alignItems: 'center' }}>
+          <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 36, fontWeight: '800', color: '#fff' }}>{pct}%</Text>
+          </View>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 8 }}>{examResult.title}</Text>
+          <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.9)' }}>{examResult.total_score} / {examResult.max_score} درجة</Text>
+        </View>
+        <View style={{ flexDirection: 'row-reverse', gap: 12, margin: 20 }}>
+          <TouchableOpacity style={{ flex: 1, backgroundColor: '#fff', borderRadius: 14, height: 50, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => navigation.navigate('Home')}>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#4F46E5' }}>الرئيسية</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ flex: 1, backgroundColor: '#fff', borderRadius: 14, height: 50, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => navigation.navigate('SubjectsList')}>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#10B981' }}>امتحان جديد</Text>
+          </TouchableOpacity>
+        </View>
+        {(examResult.answers || []).map((ans, i) => {
+          const s = ans.ai_score ?? ans.score ?? 0;
+          const c = s/ans.marks >= 0.8 ? '#10B981' : s/ans.marks >= 0.6 ? '#F59E0B' : '#EF4444';
+          return (
+            <View key={i} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginHorizontal: 20, marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={{ fontWeight: '700', color: '#1A1A2E' }}>السؤال {i+1}</Text>
+                <Text style={{ color: c, fontWeight: '700' }}>{s}/{ans.marks}</Text>
+              </View>
+              <Text style={{ color: '#1A1A2E', textAlign: 'right', marginBottom: 8 }}>{ans.question_text}</Text>
+              <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12, padding: 10, marginBottom: 6 }}>
+                <Text style={{ color: '#888', textAlign: 'right', fontSize: 12 }}>إجابتك:</Text>
+                <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.student_answer || 'لم تجب'}</Text>
+              </View>
+              <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 10, marginBottom: 6 }}>
+                <Text style={{ color: '#10B981', textAlign: 'right', fontSize: 12 }}>الإجابة النموذجية:</Text>
+                <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.model_answer}</Text>
+              </View>
+              {ans.ai_feedback && (
+                <View style={{ backgroundColor: '#EFF6FF', borderRadius: 12, padding: 10 }}>
+                  <Text style={{ color: '#4F46E5', textAlign: 'right', fontSize: 12 }}>تحليل AI:</Text>
+                  <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.ai_feedback}</Text>
+                </View>
+              )}
+            </View>
+          );
+        })}
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    );
+  }
 
   if (submitting) return (
     <View style={styles.center}>
