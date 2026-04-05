@@ -7,7 +7,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
-import DebugSubmit from '../../screens/Exam/DebugSubmit';
 import ImageUploader from '../../components/ImageUploader';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
@@ -21,15 +20,13 @@ export default function ExamScreen({ route, navigation }) {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [answerMode, setAnswerMode] = useState({});
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    initExam();
-    return () => clearInterval(timerRef.current);
-  }, []);
+  useEffect(() => { initExam(); return () => clearInterval(timerRef.current); }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -42,6 +39,13 @@ export default function ExamScreen({ route, navigation }) {
     }
     return () => clearInterval(timerRef.current);
   }, [loading, sessionId]);
+
+  // اذا وصلت النتيجة انتقل للصفحة
+  useEffect(() => {
+    if (submitResult) {
+      navigation.navigate('Results', { result: submitResult, session_id: sessionId });
+    }
+  }, [submitResult]);
 
   const initExam = async () => {
     try {
@@ -60,9 +64,8 @@ export default function ExamScreen({ route, navigation }) {
   const saveAnswer = async (questionId, text) => {
     setAnswers(prev => ({ ...prev, [questionId]: text }));
     if (sessionId) {
-      try {
-        await sessionsAPI.saveAnswer(sessionId, { question_id: questionId, answer_text: text });
-      } catch (err) { console.log(err); }
+      try { await sessionsAPI.saveAnswer(sessionId, { question_id: questionId, answer_text: text }); }
+      catch (err) { console.log(err); }
     }
   };
 
@@ -71,14 +74,12 @@ export default function ExamScreen({ route, navigation }) {
     try {
       const token = await AsyncStorage.getItem('token');
       const formData = new FormData();
-
       if (Platform.OS === 'web' && asset.file) {
         formData.append('image', asset.file);
       } else {
         formData.append('image', { uri: asset.uri, type: 'image/jpeg', name: 'answer.jpg' });
       }
       formData.append('question_id', questionId);
-
       const res = await fetch(`${API_URL}/sessions/${sessionId}/answer-image`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -88,12 +89,9 @@ export default function ExamScreen({ route, navigation }) {
       if (data.image_url) {
         setImages(prev => ({ ...prev, [questionId]: asset.uri }));
         setAnswers(prev => ({ ...prev, [questionId]: '[صورة مرفقة]' }));
-      } else {
-        Alert.alert('خطأ', data.error || 'تعذر رفع الصورة');
       }
-    } catch (err) {
-      Alert.alert('خطأ', 'تعذر رفع الصورة');
-    } finally { setUploadingImage(false); }
+    } catch (err) { Alert.alert('خطأ', 'تعذر رفع الصورة'); }
+    finally { setUploadingImage(false); }
   };
 
   const removeImage = (questionId) => {
@@ -105,8 +103,13 @@ export default function ExamScreen({ route, navigation }) {
     clearInterval(timerRef.current);
     setSubmitting(true);
     try {
-      const res = await sessionsAPI.submit(sessionId);
-      navigation.replace('Results', { result: res.data, session_id: sessionId });
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setSubmitResult(data);
     } catch (err) {
       Alert.alert('خطأ', 'تعذر تسليم الامتحان');
       setSubmitting(false);
@@ -114,7 +117,7 @@ export default function ExamScreen({ route, navigation }) {
   };
 
   const handleSubmit = () => {
-    Alert.alert('تسليم الامتحان', 'هل أنت متأكد من التسليم؟', [
+    Alert.alert('تسليم الامتحان', 'هل أنت متأكد؟', [
       { text: 'إلغاء', style: 'cancel' },
       { text: 'تسليم', onPress: submitExam }
     ]);
@@ -139,14 +142,20 @@ export default function ExamScreen({ route, navigation }) {
     </View>
   );
 
+  if (submitting) return (
+    <View style={styles.center}>
+      <ActivityIndicator size="large" color="#10B981" />
+      <Text style={styles.loadingText}>جاري التصحيح بالذكاء الاصطناعي...</Text>
+      <Text style={styles.loadingSubText}>قد يستغرق دقيقة</Text>
+    </View>
+  );
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <View style={[styles.timer, timeLeft < 300 && styles.timerWarning]}>
           <Ionicons name="time-outline" size={16} color={timeLeft < 300 ? '#EF4444' : '#4F46E5'} />
-          <Text style={[styles.timerText, timeLeft < 300 && styles.timerTextWarning]}>
-            {formatTime(timeLeft)}
-          </Text>
+          <Text style={[styles.timerText, timeLeft < 300 && styles.timerTextWarning]}>{formatTime(timeLeft)}</Text>
         </View>
         <Text style={styles.examTitle} numberOfLines={1}>{exam.title}</Text>
         <Text style={styles.progress}>{answeredCount}/{questions.length}</Text>
@@ -166,16 +175,13 @@ export default function ExamScreen({ route, navigation }) {
 
         <Text style={styles.questionText}>{q?.question_text}</Text>
 
-        {/* طريقة الإجابة */}
         <View style={styles.modeTabs}>
-          <TouchableOpacity
-            style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
+          <TouchableOpacity style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
             onPress={() => setAnswerMode(prev => ({ ...prev, [q?.id]: 'text' }))}>
             <Ionicons name="create-outline" size={18} color={mode === 'text' ? '#fff' : '#888'} />
             <Text style={[styles.modeTabText, mode === 'text' && styles.modeTabTextActive]}>كتابة</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeTab, mode === 'image' && styles.modeTabActive]}
+          <TouchableOpacity style={[styles.modeTab, mode === 'image' && styles.modeTabActive]}
             onPress={() => setAnswerMode(prev => ({ ...prev, [q?.id]: 'image' }))}>
             <Ionicons name="camera-outline" size={18} color={mode === 'image' ? '#fff' : '#888'} />
             <Text style={[styles.modeTabText, mode === 'image' && styles.modeTabTextActive]}>صورة</Text>
@@ -184,11 +190,9 @@ export default function ExamScreen({ route, navigation }) {
 
         {mode === 'image' ? (
           <View>
-            <ImageUploader
-              imageUri={images[q?.id]}
+            <ImageUploader imageUri={images[q?.id]}
               onImageSelected={(asset) => uploadImage(q?.id, asset)}
-              onRemove={() => removeImage(q?.id)}
-            />
+              onRemove={() => removeImage(q?.id)} />
             {uploadingImage && (
               <View style={styles.uploadingBox}>
                 <ActivityIndicator size="small" color="#4F46E5" />
@@ -197,19 +201,12 @@ export default function ExamScreen({ route, navigation }) {
             )}
           </View>
         ) : (
-          <TextInput
-            style={styles.answerInput}
-            placeholder="اكتب إجابتك هنا..."
-            placeholderTextColor="#aaa"
-            multiline
-            textAlign="right"
-            value={answers[q?.id] || ''}
-            onChangeText={(text) => saveAnswer(q?.id, text)}
-          />
+          <TextInput style={styles.answerInput} placeholder="اكتب إجابتك هنا..."
+            placeholderTextColor="#aaa" multiline textAlign="right"
+            value={answers[q?.id] || ''} onChangeText={(text) => saveAnswer(q?.id, text)} />
         )}
 
         <View style={{ height: 20 }} />
-        <DebugSubmit sessionId={sessionId} />
       </ScrollView>
 
       <View style={styles.nav}>
@@ -221,14 +218,9 @@ export default function ExamScreen({ route, navigation }) {
         ) : <View style={{ width: 100 }} />}
 
         {isLast ? (
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
-            {submitting
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <>
-                  <Text style={styles.submitBtnText}>تسليم</Text>
-                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                </>
-            }
+          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+            <Text style={styles.submitBtnText}>تسليم</Text>
+            <Ionicons name="checkmark-circle" size={20} color="#fff" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrent(c => c + 1)}>
@@ -244,7 +236,8 @@ export default function ExamScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { fontSize: 16, color: '#888' },
+  loadingText: { fontSize: 16, color: '#888', marginTop: 12 },
+  loadingSubText: { fontSize: 13, color: '#bbb' },
   header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: '#fff' },
   timer: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#4F46E520', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
   timerWarning: { backgroundColor: '#FEE2E2' },
