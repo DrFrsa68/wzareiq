@@ -85,7 +85,7 @@ router.post('/:session_id/submit', auth, async (req, res) => {
     // نحفظ الجلسة كمكتملة فوراً
     await pool.query(
       'UPDATE exam_sessions SET status = $1, total_score = $2, submitted_at = NOW() WHERE id = $3',
-      ['grading', initialScore, req.params.session_id]
+      ['completed', initialScore, req.params.session_id]
     );
 
     // نرجع النتيجة فوراً للطالب
