@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView,
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
-import { submitExam } from '../../services/examService';
 import ImageUploader from '../../components/ImageUploader';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
@@ -14,20 +13,19 @@ export default function ExamScreen({ route, navigation }) {
   const [answers, setAnswers] = useState({});
   const [images, setImages] = useState({});
   const [current, setCurrent] = useState(0);
-  const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [examResult, setExamResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [answerMode, setAnswerMode] = useState({});
-  const [examResult, setExamResult] = useState(null);
-  const timerRef = useRef(null);
   const sessionIdRef = useRef(null);
+  const timerRef = useRef(null);
 
   useEffect(() => { initExam(); return () => clearInterval(timerRef.current); }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !examResult) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) { clearInterval(timerRef.current); doSubmit(); return 0; }
@@ -45,7 +43,6 @@ export default function ExamScreen({ route, navigation }) {
         examsAPI.getQuestions(exam.id)
       ]);
       sessionIdRef.current = sessionRes.data.session_id;
-      setSessionId(sessionRes.data.session_id);
       setQuestions(questionsRes.data);
     } catch (err) {
       Alert.alert('خطأ', 'تعذر بدء الامتحان');
@@ -55,11 +52,14 @@ export default function ExamScreen({ route, navigation }) {
 
   const saveAnswer = async (questionId, text) => {
     setAnswers(prev => ({ ...prev, [questionId]: text }));
-    try { await sessionsAPI.saveAnswer(sessionIdRef.current, { question_id: questionId, answer_text: text }); }
-    catch (err) { console.log(err); }
+    if (sessionIdRef.current) {
+      try { await sessionsAPI.saveAnswer(sessionIdRef.current, { question_id: questionId, answer_text: text }); }
+      catch (err) { console.log(err); }
+    }
   };
 
   const uploadImage = async (questionId, asset) => {
+    if (!sessionIdRef.current) return Alert.alert('خطأ', 'الجلسة غير جاهزة');
     setUploadingImage(true);
     try {
       const token = await AsyncStorage.getItem('token');
@@ -88,18 +88,30 @@ export default function ExamScreen({ route, navigation }) {
   };
 
   const doSubmit = async () => {
+    const sid = sessionIdRef.current;
+    Alert.alert('تأكيد', `session: ${sid ? sid.slice(0,8) : 'فارغ'}`, [{ text: 'حسناً' }]);
+    if (!sid) return Alert.alert('خطأ', 'الجلسة غير موجودة');
+    
     clearInterval(timerRef.current);
     setSubmitting(true);
-    const sid = sessionIdRef.current || sessionId;
-    console.log('doSubmit called, sid:', sid);
+    
     try {
-      const data = await submitExam(sid);
-      console.log('Submit success:', data?.total_score);
+      const token = await AsyncStorage.getItem('token');
+      Alert.alert('جاري', 'يتصل بالسيرفر...');
+      
+      const res = await fetch(`${API_URL}/sessions/${sid}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      
+      const text = await res.text();
+      Alert.alert('استجابة السيرفر', `Status: ${res.status}\n${text.slice(0, 100)}`);
+      
+      const data = JSON.parse(text);
       setExamResult(data);
-      setSubmitting(false);
     } catch (err) {
-      console.log('Submit error:', err.message);
-      Alert.alert('خطأ في التسليم', err.message);
+      Alert.alert('خطأ', err.message);
+    } finally {
       setSubmitting(false);
     }
   };
@@ -130,7 +142,13 @@ export default function ExamScreen({ route, navigation }) {
     </View>
   );
 
-  // عرض النتيجة داخل نفس الشاشة
+  if (submitting) return (
+    <View style={styles.center}>
+      <ActivityIndicator size="large" color="#10B981" />
+      <Text style={styles.loadingText}>جاري التصحيح...</Text>
+    </View>
+  );
+
   if (examResult) {
     const pct = Math.round((examResult.total_score / examResult.max_score) * 100);
     const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#EF4444';
@@ -139,10 +157,12 @@ export default function ExamScreen({ route, navigation }) {
         <View style={{ backgroundColor: color, paddingTop: 60, paddingBottom: 32, alignItems: 'center' }}>
           <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
             <Text style={{ fontSize: 36, fontWeight: '800', color: '#fff' }}>{pct}%</Text>
+            <Text style={{ fontSize: 14, color: '#fff' }}>{pct >= 80 ? 'ممتاز' : pct >= 60 ? 'جيد' : 'يحتاج مراجعة'}</Text>
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 8 }}>{examResult.title}</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 8, textAlign: 'center', paddingHorizontal: 20 }}>{examResult.title}</Text>
           <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.9)' }}>{examResult.total_score} / {examResult.max_score} درجة</Text>
         </View>
+
         <View style={{ flexDirection: 'row-reverse', gap: 12, margin: 20 }}>
           <TouchableOpacity style={{ flex: 1, backgroundColor: '#fff', borderRadius: 14, height: 50, justifyContent: 'center', alignItems: 'center' }}
             onPress={() => navigation.navigate('Home')}>
@@ -153,6 +173,8 @@ export default function ExamScreen({ route, navigation }) {
             <Text style={{ fontSize: 15, fontWeight: '700', color: '#10B981' }}>امتحان جديد</Text>
           </TouchableOpacity>
         </View>
+
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1A2E', textAlign: 'right', marginHorizontal: 20, marginBottom: 12 }}>مراجعة الإجابات</Text>
         {(examResult.answers || []).map((ans, i) => {
           const s = ans.ai_score ?? ans.score ?? 0;
           const c = s/ans.marks >= 0.8 ? '#10B981' : s/ans.marks >= 0.6 ? '#F59E0B' : '#EF4444';
@@ -171,10 +193,10 @@ export default function ExamScreen({ route, navigation }) {
                 <Text style={{ color: '#10B981', textAlign: 'right', fontSize: 12 }}>الإجابة النموذجية:</Text>
                 <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.model_answer}</Text>
               </View>
-              {ans.ai_feedback && (
+              {(ans.ai_feedback || ans.feedback) && (
                 <View style={{ backgroundColor: '#EFF6FF', borderRadius: 12, padding: 10 }}>
                   <Text style={{ color: '#4F46E5', textAlign: 'right', fontSize: 12 }}>تحليل AI:</Text>
-                  <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.ai_feedback}</Text>
+                  <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.ai_feedback || ans.feedback}</Text>
                 </View>
               )}
             </View>
@@ -184,14 +206,6 @@ export default function ExamScreen({ route, navigation }) {
       </ScrollView>
     );
   }
-
-  if (submitting) return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color="#10B981" />
-      <Text style={styles.loadingText}>جاري التصحيح...</Text>
-      <Text style={styles.loadingSubText}>قد يستغرق دقيقة</Text>
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -215,7 +229,6 @@ export default function ExamScreen({ route, navigation }) {
           </View>
           <Text style={styles.marks}>{q?.marks} درجة</Text>
         </View>
-
         <Text style={styles.questionText}>{q?.question_text}</Text>
 
         <View style={styles.modeTabs}>
@@ -279,7 +292,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 16, color: '#888', marginTop: 12 },
-  loadingSubText: { fontSize: 13, color: '#bbb' },
   header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: '#fff' },
   timer: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#4F46E520', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
   timerWarning: { backgroundColor: '#FEE2E2' },
