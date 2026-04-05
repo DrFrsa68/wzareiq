@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
 import ImageUploader from '../../components/ImageUploader';
+import Toast from '../../components/Toast';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
 
@@ -19,8 +20,11 @@ export default function ExamScreen({ route, navigation }) {
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [answerMode, setAnswerMode] = useState({});
+  const [toast, setToast] = useState(null);
   const sessionIdRef = useRef(null);
   const timerRef = useRef(null);
+
+  const showToast = (message, type = 'info') => setToast({ message, type, key: Date.now() });
 
   useEffect(() => { initExam(); return () => clearInterval(timerRef.current); }, []);
 
@@ -38,15 +42,16 @@ export default function ExamScreen({ route, navigation }) {
 
   const initExam = async () => {
     try {
+      showToast('جاري تحميل الامتحان...', 'info');
       const [sessionRes, questionsRes] = await Promise.all([
         sessionsAPI.start(exam.id),
         examsAPI.getQuestions(exam.id)
       ]);
       sessionIdRef.current = sessionRes.data.session_id;
       setQuestions(questionsRes.data);
+      showToast('تم تحميل الامتحان ✅', 'success');
     } catch (err) {
-      Alert.alert('خطأ', 'تعذر بدء الامتحان');
-      navigation.goBack();
+      showToast('خطأ: ' + err.message, 'error');
     } finally { setLoading(false); }
   };
 
@@ -59,7 +64,7 @@ export default function ExamScreen({ route, navigation }) {
   };
 
   const uploadImage = async (questionId, asset) => {
-    if (!sessionIdRef.current) return Alert.alert('خطأ', 'الجلسة غير جاهزة');
+    if (!sessionIdRef.current) return showToast('الجلسة غير جاهزة', 'error');
     setUploadingImage(true);
     try {
       const token = await AsyncStorage.getItem('token');
@@ -77,8 +82,9 @@ export default function ExamScreen({ route, navigation }) {
       if (data.image_url) {
         setImages(prev => ({ ...prev, [questionId]: asset.uri }));
         setAnswers(prev => ({ ...prev, [questionId]: '[صورة مرفقة]' }));
+        showToast('تم رفع الصورة ✅', 'success');
       }
-    } catch (err) { Alert.alert('خطأ', 'تعذر رفع الصورة'); }
+    } catch (err) { showToast('خطأ رفع الصورة: ' + err.message, 'error'); }
     finally { setUploadingImage(false); }
   };
 
@@ -89,38 +95,35 @@ export default function ExamScreen({ route, navigation }) {
 
   const doSubmit = async () => {
     const sid = sessionIdRef.current;
-    Alert.alert('تأكيد', `session: ${sid ? sid.slice(0,8) : 'فارغ'}`, [{ text: 'حسناً' }]);
-    if (!sid) return Alert.alert('خطأ', 'الجلسة غير موجودة');
-    
+    showToast(`session: ${sid ? sid.slice(0,8) + '...' : 'فارغ!'}`, sid ? 'info' : 'error');
+    if (!sid) return;
+
     clearInterval(timerRef.current);
     setSubmitting(true);
-    
+
     try {
       const token = await AsyncStorage.getItem('token');
-      Alert.alert('جاري', 'يتصل بالسيرفر...');
-      
+      showToast('يتصل بالسيرفر...', 'info');
+
       const res = await fetch(`${API_URL}/sessions/${sid}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
-      
+
+      showToast(`Status: ${res.status}`, res.ok ? 'success' : 'error');
       const text = await res.text();
-      Alert.alert('استجابة السيرفر', `Status: ${res.status}\n${text.slice(0, 100)}`);
-      
       const data = JSON.parse(text);
-      setExamResult(data);
+      showToast('تم التسليم! جاري عرض النتيجة...', 'success');
+      setTimeout(() => setExamResult(data), 1500);
     } catch (err) {
-      Alert.alert('خطأ', err.message);
-    } finally {
+      showToast('خطأ: ' + err.message, 'error');
       setSubmitting(false);
     }
   };
 
   const handleSubmit = () => {
-    Alert.alert('تسليم الامتحان', 'هل أنت متأكد؟', [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'تسليم', onPress: doSubmit }
-    ]);
+    showToast('جاري التسليم...', 'info');
+    doSubmit();
   };
 
   const formatTime = (secs) => {
@@ -144,8 +147,9 @@ export default function ExamScreen({ route, navigation }) {
 
   if (submitting) return (
     <View style={styles.center}>
+      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onHide={() => setToast(null)} />}
       <ActivityIndicator size="large" color="#10B981" />
-      <Text style={styles.loadingText}>جاري التصحيح...</Text>
+      <Text style={styles.loadingText}>جاري التسليم...</Text>
     </View>
   );
 
@@ -161,8 +165,8 @@ export default function ExamScreen({ route, navigation }) {
           </View>
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 8, textAlign: 'center', paddingHorizontal: 20 }}>{examResult.title}</Text>
           <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.9)' }}>{examResult.total_score} / {examResult.max_score} درجة</Text>
+          {examResult.grading && <Text style={{ color: 'rgba(255,255,255,0.8)', marginTop: 8, fontSize: 13 }}>⏳ جاري التصحيح النهائي...</Text>}
         </View>
-
         <View style={{ flexDirection: 'row-reverse', gap: 12, margin: 20 }}>
           <TouchableOpacity style={{ flex: 1, backgroundColor: '#fff', borderRadius: 14, height: 50, justifyContent: 'center', alignItems: 'center' }}
             onPress={() => navigation.navigate('Home')}>
@@ -173,8 +177,6 @@ export default function ExamScreen({ route, navigation }) {
             <Text style={{ fontSize: 15, fontWeight: '700', color: '#10B981' }}>امتحان جديد</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1A2E', textAlign: 'right', marginHorizontal: 20, marginBottom: 12 }}>مراجعة الإجابات</Text>
         {(examResult.answers || []).map((ans, i) => {
           const s = ans.ai_score ?? ans.score ?? 0;
           const c = s/ans.marks >= 0.8 ? '#10B981' : s/ans.marks >= 0.6 ? '#F59E0B' : '#EF4444';
@@ -189,16 +191,10 @@ export default function ExamScreen({ route, navigation }) {
                 <Text style={{ color: '#888', textAlign: 'right', fontSize: 12 }}>إجابتك:</Text>
                 <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.student_answer || 'لم تجب'}</Text>
               </View>
-              <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 10, marginBottom: 6 }}>
+              <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 10 }}>
                 <Text style={{ color: '#10B981', textAlign: 'right', fontSize: 12 }}>الإجابة النموذجية:</Text>
                 <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.model_answer}</Text>
               </View>
-              {(ans.ai_feedback || ans.feedback) && (
-                <View style={{ backgroundColor: '#EFF6FF', borderRadius: 12, padding: 10 }}>
-                  <Text style={{ color: '#4F46E5', textAlign: 'right', fontSize: 12 }}>تحليل AI:</Text>
-                  <Text style={{ color: '#1A1A2E', textAlign: 'right' }}>{ans.ai_feedback || ans.feedback}</Text>
-                </View>
-              )}
             </View>
           );
         })}
@@ -209,6 +205,7 @@ export default function ExamScreen({ route, navigation }) {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onHide={() => setToast(null)} />}
       <View style={styles.header}>
         <View style={[styles.timer, timeLeft < 300 && styles.timerWarning]}>
           <Ionicons name="time-outline" size={16} color={timeLeft < 300 ? '#EF4444' : '#4F46E5'} />
@@ -217,11 +214,9 @@ export default function ExamScreen({ route, navigation }) {
         <Text style={styles.examTitle} numberOfLines={1}>{exam.title}</Text>
         <Text style={styles.progress}>{answeredCount}/{questions.length}</Text>
       </View>
-
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
       </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.questionHeader}>
           <View style={styles.questionBadge}>
@@ -230,7 +225,6 @@ export default function ExamScreen({ route, navigation }) {
           <Text style={styles.marks}>{q?.marks} درجة</Text>
         </View>
         <Text style={styles.questionText}>{q?.question_text}</Text>
-
         <View style={styles.modeTabs}>
           <TouchableOpacity style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
             onPress={() => setAnswerMode(prev => ({ ...prev, [q?.id]: 'text' }))}>
@@ -243,7 +237,6 @@ export default function ExamScreen({ route, navigation }) {
             <Text style={[styles.modeTabText, mode === 'image' && styles.modeTabTextActive]}>صورة</Text>
           </TouchableOpacity>
         </View>
-
         {mode === 'image' ? (
           <View>
             <ImageUploader imageUri={images[q?.id]}
@@ -263,7 +256,6 @@ export default function ExamScreen({ route, navigation }) {
         )}
         <View style={{ height: 20 }} />
       </ScrollView>
-
       <View style={styles.nav}>
         {current > 0 ? (
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrent(c => c - 1)}>
@@ -271,7 +263,6 @@ export default function ExamScreen({ route, navigation }) {
             <Text style={styles.navBtnText}>السابق</Text>
           </TouchableOpacity>
         ) : <View style={{ width: 100 }} />}
-
         {isLast ? (
           <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
             <Text style={styles.submitBtnText}>تسليم</Text>
