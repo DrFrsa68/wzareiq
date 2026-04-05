@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ScrollView, KeyboardAvoidingView,
-  Platform, Image, ActivityIndicator
+  Platform, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { examsAPI, sessionsAPI } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { examsAPI, sessionsAPI } from '../../services/api';
+import ImageUploader from '../../components/ImageUploader';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
 
@@ -22,6 +22,7 @@ export default function ExamScreen({ route, navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(exam.duration * 60);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [answerMode, setAnswerMode] = useState({});
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function ExamScreen({ route, navigation }) {
     if (!loading) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
-          if (prev <= 1) { clearInterval(timerRef.current); handleSubmit(true); return 0; }
+          if (prev <= 1) { clearInterval(timerRef.current); submitExam(); return 0; }
           return prev - 1;
         });
       }, 1000);
@@ -64,46 +65,17 @@ export default function ExamScreen({ route, navigation }) {
     }
   };
 
-  const pickImage = async (questionId) => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('تنبيه', 'نحتاج إذن للوصول للصور');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      base64: false,
-    });
-    if (!result.canceled) {
-      uploadImage(questionId, result.assets[0]);
-    }
-  };
-
-  const takePhoto = async (questionId) => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('تنبيه', 'نحتاج إذن للكاميرا');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      uploadImage(questionId, result.assets[0]);
-    }
-  };
-
   const uploadImage = async (questionId, asset) => {
     setUploadingImage(true);
     try {
       const token = await AsyncStorage.getItem('token');
       const formData = new FormData();
-      formData.append('image', {
-        uri: asset.uri,
-        type: 'image/jpeg',
-        name: 'answer.jpg',
-      });
+
+      if (Platform.OS === 'web' && asset.file) {
+        formData.append('image', asset.file);
+      } else {
+        formData.append('image', { uri: asset.uri, type: 'image/jpeg', name: 'answer.jpg' });
+      }
       formData.append('question_id', questionId);
 
       const res = await fetch(`${API_URL}/sessions/${sessionId}/answer-image`, {
@@ -115,28 +87,17 @@ export default function ExamScreen({ route, navigation }) {
       if (data.image_url) {
         setImages(prev => ({ ...prev, [questionId]: asset.uri }));
         setAnswers(prev => ({ ...prev, [questionId]: '[صورة مرفقة]' }));
-        Alert.alert('✅', 'تم رفع الصورة بنجاح');
+      } else {
+        Alert.alert('خطأ', data.error || 'تعذر رفع الصورة');
       }
     } catch (err) {
       Alert.alert('خطأ', 'تعذر رفع الصورة');
     } finally { setUploadingImage(false); }
   };
 
-  const showImageOptions = (questionId) => {
-    Alert.alert('رفع صورة الجواب', 'اختر طريقة الرفع', [
-      { text: 'الكاميرا', onPress: () => takePhoto(questionId) },
-      { text: 'من المعرض', onPress: () => pickImage(questionId) },
-      { text: 'إلغاء', style: 'cancel' }
-    ]);
-  };
-
-  const handleSubmit = async (auto = false) => {
-    if (!auto) {
-      Alert.alert('تسليم الامتحان', 'هل أنت متأكد من التسليم؟', [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'تسليم', onPress: () => submitExam() }
-      ]);
-    } else { submitExam(); }
+  const removeImage = (questionId) => {
+    setImages(prev => { const n = {...prev}; delete n[questionId]; return n; });
+    setAnswers(prev => { const n = {...prev}; delete n[questionId]; return n; });
   };
 
   const submitExam = async () => {
@@ -147,7 +108,15 @@ export default function ExamScreen({ route, navigation }) {
       navigation.replace('Results', { result: res.data, session_id: sessionId });
     } catch (err) {
       Alert.alert('خطأ', 'تعذر تسليم الامتحان');
-    } finally { setSubmitting(false); }
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    Alert.alert('تسليم الامتحان', 'هل أنت متأكد من التسليم؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      { text: 'تسليم', onPress: submitExam }
+    ]);
   };
 
   const formatTime = (secs) => {
@@ -160,6 +129,7 @@ export default function ExamScreen({ route, navigation }) {
   const answeredCount = Object.values(answers).filter(a => a?.trim()).length;
   const isLast = current === questions.length - 1;
   const q = questions[current];
+  const mode = answerMode[q?.id] || 'text';
 
   if (loading) return (
     <View style={styles.center}>
@@ -170,7 +140,6 @@ export default function ExamScreen({ route, navigation }) {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={[styles.timer, timeLeft < 300 && styles.timerWarning]}>
           <Ionicons name="time-outline" size={16} color={timeLeft < 300 ? '#EF4444' : '#4F46E5'} />
@@ -182,12 +151,10 @@ export default function ExamScreen({ route, navigation }) {
         <Text style={styles.progress}>{answeredCount}/{questions.length}</Text>
       </View>
 
-      {/* Progress Bar */}
       <View style={styles.progressBar}>
         <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
       </View>
 
-      {/* Question */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.questionHeader}>
           <View style={styles.questionBadge}>
@@ -198,37 +165,35 @@ export default function ExamScreen({ route, navigation }) {
 
         <Text style={styles.questionText}>{q?.question_text}</Text>
 
-        {/* Answer Options */}
-        <View style={styles.answerOptions}>
-          <Text style={styles.answerLabel}>طريقة الإجابة:</Text>
-          <View style={styles.answerTabs}>
-            <TouchableOpacity
-              style={[styles.tab, !images[q?.id] && styles.tabActive]}
-              onPress={() => setImages(prev => { const n = {...prev}; delete n[q?.id]; return n; })}>
-              <Ionicons name="create-outline" size={18} color={!images[q?.id] ? '#fff' : '#888'} />
-              <Text style={[styles.tabText, !images[q?.id] && styles.tabTextActive]}>كتابة</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, images[q?.id] && styles.tabActive]}
-              onPress={() => showImageOptions(q?.id)}>
-              <Ionicons name="camera-outline" size={18} color={images[q?.id] ? '#fff' : '#888'} />
-              <Text style={[styles.tabText, images[q?.id] && styles.tabTextActive]}>صورة</Text>
-            </TouchableOpacity>
-          </View>
+        {/* طريقة الإجابة */}
+        <View style={styles.modeTabs}>
+          <TouchableOpacity
+            style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
+            onPress={() => setAnswerMode(prev => ({ ...prev, [q?.id]: 'text' }))}>
+            <Ionicons name="create-outline" size={18} color={mode === 'text' ? '#fff' : '#888'} />
+            <Text style={[styles.modeTabText, mode === 'text' && styles.modeTabTextActive]}>كتابة</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeTab, mode === 'image' && styles.modeTabActive]}
+            onPress={() => setAnswerMode(prev => ({ ...prev, [q?.id]: 'image' }))}>
+            <Ionicons name="camera-outline" size={18} color={mode === 'image' ? '#fff' : '#888'} />
+            <Text style={[styles.modeTabText, mode === 'image' && styles.modeTabTextActive]}>صورة</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Image Preview */}
-        {images[q?.id] ? (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: images[q?.id] }} style={styles.answerImage} resizeMode="contain" />
-            <TouchableOpacity style={styles.changeImageBtn} onPress={() => showImageOptions(q?.id)}>
-              <Ionicons name="refresh-outline" size={16} color="#4F46E5" />
-              <Text style={styles.changeImageText}>تغيير الصورة</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.removeImageBtn}
-              onPress={() => setImages(prev => { const n = {...prev}; delete n[q?.id]; return n; })}>
-              <Ionicons name="trash-outline" size={16} color="#EF4444" />
-            </TouchableOpacity>
+        {mode === 'image' ? (
+          <View>
+            <ImageUploader
+              imageUri={images[q?.id]}
+              onImageSelected={(asset) => uploadImage(q?.id, asset)}
+              onRemove={() => removeImage(q?.id)}
+            />
+            {uploadingImage && (
+              <View style={styles.uploadingBox}>
+                <ActivityIndicator size="small" color="#4F46E5" />
+                <Text style={styles.uploadingText}>جاري رفع الصورة...</Text>
+              </View>
+            )}
           </View>
         ) : (
           <TextInput
@@ -242,17 +207,9 @@ export default function ExamScreen({ route, navigation }) {
           />
         )}
 
-        {uploadingImage && (
-          <View style={styles.uploadingBox}>
-            <ActivityIndicator size="small" color="#4F46E5" />
-            <Text style={styles.uploadingText}>جاري رفع الصورة...</Text>
-          </View>
-        )}
-
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Navigation */}
       <View style={styles.nav}>
         {current > 0 ? (
           <TouchableOpacity style={styles.navBtn} onPress={() => setCurrent(c => c - 1)}>
@@ -262,7 +219,7 @@ export default function ExamScreen({ route, navigation }) {
         ) : <View style={{ width: 100 }} />}
 
         {isLast ? (
-          <TouchableOpacity style={styles.submitBtn} onPress={() => handleSubmit(false)} disabled={submitting}>
+          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
             {submitting
               ? <ActivityIndicator color="#fff" size="small" />
               : <>
@@ -301,19 +258,12 @@ const styles = StyleSheet.create({
   questionBadgeText: { color: '#4F46E5', fontWeight: '700', fontSize: 14 },
   marks: { fontSize: 13, color: '#888', fontWeight: '600' },
   questionText: { fontSize: 17, color: '#1A1A2E', textAlign: 'right', lineHeight: 28, marginBottom: 20, backgroundColor: '#fff', borderRadius: 16, padding: 16 },
-  answerOptions: { marginBottom: 12 },
-  answerLabel: { fontSize: 15, fontWeight: '700', color: '#1A1A2E', textAlign: 'right', marginBottom: 10 },
-  answerTabs: { flexDirection: 'row-reverse', gap: 10 },
-  tab: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F0F0F0', borderWidth: 2, borderColor: 'transparent' },
-  tabActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#888' },
-  tabTextActive: { color: '#fff' },
+  modeTabs: { flexDirection: 'row-reverse', gap: 10, marginBottom: 14 },
+  modeTab: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F0F0F0', borderWidth: 2, borderColor: 'transparent' },
+  modeTabActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
+  modeTabText: { fontSize: 14, fontWeight: '600', color: '#888' },
+  modeTabTextActive: { color: '#fff' },
   answerInput: { backgroundColor: '#fff', borderRadius: 16, padding: 16, fontSize: 15, color: '#1A1A2E', minHeight: 140, textAlignVertical: 'top', borderWidth: 2, borderColor: '#E5E7EB' },
-  imageContainer: { backgroundColor: '#fff', borderRadius: 16, padding: 12, borderWidth: 2, borderColor: '#4F46E5' },
-  answerImage: { width: '100%', height: 250, borderRadius: 12, marginBottom: 10 },
-  changeImageBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 },
-  changeImageText: { color: '#4F46E5', fontSize: 14, fontWeight: '600' },
-  removeImageBtn: { position: 'absolute', top: 16, left: 16, backgroundColor: '#FEE2E2', borderRadius: 20, padding: 6 },
   uploadingBox: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 12 },
   uploadingText: { fontSize: 14, color: '#4F46E5' },
   nav: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0' },
