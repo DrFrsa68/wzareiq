@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db/connect');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
-const { gradeAnswer, gradeWithImage } = require('../services/gemini');
+const { gradeAnswer, gradeWithImage } = require('../services/ai');
 const { upload, cloudinary } = require('../services/cloudinary');
 const axios = require('axios');
 
