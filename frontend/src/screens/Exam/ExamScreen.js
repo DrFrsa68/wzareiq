@@ -43,7 +43,7 @@ export default function ExamScreen({ route, navigation }) {
   // اذا وصلت النتيجة انتقل للصفحة
   useEffect(() => {
     if (submitResult) {
-      navigation.navigate('Results', { result: submitResult, session_id: sessionId });
+      navigation.reset({ index: 0, routes: [{ name: 'Results', params: { result: submitResult, session_id: sessionId } }] });
     }
   }, [submitResult]);
 
