@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { examsAPI, sessionsAPI } from '../../services/api';
+import DebugSubmit from '../../screens/Exam/DebugSubmit';
 import ImageUploader from '../../components/ImageUploader';
 
 const API_URL = 'https://modest-trust-production-c992.up.railway.app/api';
@@ -208,6 +209,7 @@ export default function ExamScreen({ route, navigation }) {
         )}
 
         <View style={{ height: 20 }} />
+        <DebugSubmit sessionId={sessionId} />
       </ScrollView>
 
       <View style={styles.nav}>
