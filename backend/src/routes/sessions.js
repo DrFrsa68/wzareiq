@@ -3,6 +3,9 @@ const router = express.Router();
 const pool = require('../db/connect');
 const auth = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
+const { gradeAnswer, gradeWithImage } = require('../services/gemini');
+const { upload, cloudinary } = require('../services/cloudinary');
+const axios = require('axios');
 
 // بدء امتحان جديد
 router.post('/start', auth, async (req, res) => {
@@ -12,7 +15,6 @@ router.post('/start', auth, async (req, res) => {
     if (exam.rows.length === 0)
       return res.status(404).json({ error: 'الامتحان غير موجود' });
 
-    // تحقق اذا الطالب ما خلص نفس الامتحان
     const existing = await pool.query(
       'SELECT id FROM exam_sessions WHERE student_id = $1 AND exam_id = $2 AND status = $3',
       [req.user.id, exam_id, 'in_progress']
@@ -25,14 +27,13 @@ router.post('/start', auth, async (req, res) => {
       'INSERT INTO exam_sessions (id, student_id, exam_id, max_score) VALUES ($1, $2, $3, $4)',
       [sessionId, req.user.id, exam_id, exam.rows[0].total_marks]
     );
-
     res.json({ session_id: sessionId, resumed: false });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// حفظ إجابة سؤال
+// حفظ إجابة نصية
 router.post('/:session_id/answer', auth, async (req, res) => {
   try {
     const { question_id, answer_text } = req.body;
@@ -47,7 +48,6 @@ router.post('/:session_id/answer', auth, async (req, res) => {
       'SELECT id FROM student_answers WHERE session_id = $1 AND question_id = $2',
       [req.params.session_id, question_id]
     );
-
     if (exists.rows.length > 0) {
       await pool.query(
         'UPDATE student_answers SET answer_text = $1 WHERE session_id = $2 AND question_id = $3',
@@ -59,14 +59,46 @@ router.post('/:session_id/answer', auth, async (req, res) => {
         [uuidv4(), req.params.session_id, question_id, answer_text]
       );
     }
-
     res.json({ message: 'تم الحفظ' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// تسليم الامتحان وتصحيح بالـ AI
+// رفع صورة الجواب
+router.post('/:session_id/answer-image', auth, upload.single('image'), async (req, res) => {
+  try {
+    const { question_id } = req.body;
+    const session = await pool.query(
+      'SELECT * FROM exam_sessions WHERE id = $1 AND student_id = $2',
+      [req.params.session_id, req.user.id]
+    );
+    if (session.rows.length === 0)
+      return res.status(404).json({ error: 'الجلسة غير موجودة' });
+
+    const imageUrl = req.file.path;
+    const exists = await pool.query(
+      'SELECT id FROM student_answers WHERE session_id = $1 AND question_id = $2',
+      [req.params.session_id, question_id]
+    );
+    if (exists.rows.length > 0) {
+      await pool.query(
+        'UPDATE student_answers SET answer_image_url = $1, answer_text = $2 WHERE session_id = $3 AND question_id = $4',
+        [imageUrl, '[صورة مرفقة]', req.params.session_id, question_id]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO student_answers (id, session_id, question_id, answer_text, answer_image_url) VALUES ($1, $2, $3, $4, $5)',
+        [uuidv4(), req.params.session_id, question_id, '[صورة مرفقة]', imageUrl]
+      );
+    }
+    res.json({ message: 'تم رفع الصورة', image_url: imageUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// تسليم الامتحان والتصحيح بـ Gemini
 router.post('/:session_id/submit', auth, async (req, res) => {
   try {
     const session = await pool.query(
@@ -88,13 +120,18 @@ router.post('/:session_id/submit', auth, async (req, res) => {
     const corrected = [];
 
     for (const answer of answers.rows) {
-      // تصحيح بالـ AI
-      const aiResult = await gradeWithAI(
-        answer.question_text,
-        answer.model_answer,
-        answer.answer_text,
-        answer.marks
-      );
+      let aiResult;
+      if (answer.answer_image_url) {
+        try {
+          const imgRes = await axios.get(answer.answer_image_url, { responseType: 'arraybuffer' });
+          const base64 = Buffer.from(imgRes.data).toString('base64');
+          aiResult = await gradeWithImage(answer.question_text, answer.model_answer, base64, answer.marks);
+        } catch {
+          aiResult = await gradeAnswer(answer.question_text, answer.model_answer, '[صورة غير قابلة للقراءة]', answer.marks);
+        }
+      } else {
+        aiResult = await gradeAnswer(answer.question_text, answer.model_answer, answer.answer_text || '', answer.marks);
+      }
 
       await pool.query(
         'UPDATE student_answers SET ai_score = $1, ai_feedback = $2 WHERE id = $3',
@@ -105,6 +142,7 @@ router.post('/:session_id/submit', auth, async (req, res) => {
       corrected.push({
         question_text: answer.question_text,
         student_answer: answer.answer_text,
+        answer_image_url: answer.answer_image_url,
         model_answer: answer.model_answer,
         marks: answer.marks,
         score: aiResult.score,
@@ -129,40 +167,7 @@ router.post('/:session_id/submit', auth, async (req, res) => {
   }
 });
 
-// دالة التصحيح بالذكاء الاصطناعي
-async function gradeWithAI(question, modelAnswer, studentAnswer, maxMarks) {
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        messages: [{
-          role: 'user',
-          content: `أنت مصحح امتحانات عراقي خبير. صحح إجابة الطالب بدقة.
-
-السؤال: ${question}
-الإجابة النموذجية: ${modelAnswer}
-إجابة الطالب: ${studentAnswer}
-الدرجة الكاملة: ${maxMarks}
-
-رد فقط بـ JSON هكذا بدون أي نص إضافي:
-{"score": رقم من 0 إلى ${maxMarks}, "feedback": "تعليق مختصر بالعربي"}`
-        }]
-      })
-    });
-
-    const data = await response.json();
-    const text = data.content[0].text.trim();
-    const parsed = JSON.parse(text);
-    return { score: Math.min(parsed.score, maxMarks), feedback: parsed.feedback };
-  } catch {
-    return { score: 0, feedback: 'تعذر التصحيح التلقائي' };
-  }
-}
-
-// جلب سجل امتحانات الطالب
+// سجل الامتحانات
 router.get('/history', auth, async (req, res) => {
   try {
     const result = await pool.query(
@@ -180,7 +185,7 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-// جلب تفاصيل جلسة امتحان
+// تفاصيل جلسة
 router.get('/:session_id', auth, async (req, res) => {
   try {
     const session = await pool.query(
@@ -202,7 +207,6 @@ router.get('/:session_id', auth, async (req, res) => {
        ORDER BY q.question_number`,
       [req.params.session_id]
     );
-
     res.json({ ...session.rows[0], answers: answers.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
