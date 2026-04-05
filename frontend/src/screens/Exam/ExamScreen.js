@@ -94,7 +94,7 @@ export default function ExamScreen({ route, navigation }) {
     try {
       const data = await submitExam(sid);
       console.log('Submit success:', data?.total_score);
-      navigation.navigate('Results', { result: data, session_id: sid });
+      navigation.replace('Results', { result: data, session_id: sid });
     } catch (err) {
       console.log('Submit error:', err.message);
       Alert.alert('خطأ في التسليم', err.message);
