@@ -176,3 +176,22 @@ router.get('/:session_id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// endpoint لإعادة التصحيح اليدوي
+router.post('/:session_id/regrade', auth, async (req, res) => {
+  try {
+    const session = await pool.query(
+      'SELECT * FROM exam_sessions WHERE id = $1 AND student_id = $2',
+      [req.params.session_id, req.user.id]
+    );
+    if (session.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+    
+    const answers = await pool.query(
+      'SELECT sa.*, q.question_text, q.marks, q.model_answer FROM student_answers sa JOIN questions q ON sa.question_id = q.id WHERE sa.session_id = $1',
+      [req.params.session_id]
+    );
+    
+    gradeInBackground(req.params.session_id, answers.rows, session.rows[0].max_score);
+    res.json({ message: 'جاري إعادة التصحيح' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
