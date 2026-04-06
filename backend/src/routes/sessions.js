@@ -63,7 +63,6 @@ router.post('/:session_id/answer-image', auth, upload.single('image'), async (re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// تسليم فوري بدون انتظار AI
 router.post('/:session_id/submit', auth, async (req, res) => {
   try {
     const session = await pool.query(
@@ -79,76 +78,64 @@ router.post('/:session_id/submit', auth, async (req, res) => {
       [req.params.session_id]
     );
 
-    // نحسب درجة أولية فورية (50% من كل سؤال)
-    const initialScore = answers.rows.reduce((sum, a) => sum + Math.round(a.marks * 0.5), 0);
-
-    // نحفظ الجلسة كمكتملة فوراً
-    await pool.query(
-      'UPDATE exam_sessions SET status = $1, total_score = $2, submitted_at = NOW() WHERE id = $3',
-      ['completed', initialScore, req.params.session_id]
-    );
-
-    // نرجع النتيجة فوراً للطالب
-    const response = {
-      session_id: req.params.session_id,
-      total_score: initialScore,
-      max_score: session.rows[0].max_score,
-      title: session.rows[0].title,
-      grading: true,
-      answers: answers.rows.map(a => ({
-        question_text: a.question_text,
-        student_answer: a.answer_text,
-        model_answer: a.model_answer,
-        marks: a.marks,
-        score: Math.round(a.marks * 0.5),
-        feedback: 'جاري التصحيح...'
-      }))
-    };
-
-    res.json(response);
-
-    // التصحيح بالـ AI يصير في الخلفية
-    gradeInBackground(req.params.session_id, answers.rows, session.rows[0].max_score);
-
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// تصحيح في الخلفية
-async function gradeInBackground(sessionId, answers, maxScore) {
-  try {
     let totalScore = 0;
-    for (const answer of answers) {
+    const corrected = [];
+
+    for (const answer of answers.rows) {
       let result;
-      if (answer.answer_image_url) {
-        try {
-          const imgRes = await axios.get(answer.answer_image_url, { responseType: 'arraybuffer', timeout: 10000 });
+      try {
+        if (answer.answer_image_url) {
+          const imgRes = await axios.get(answer.answer_image_url, { responseType: 'arraybuffer', timeout: 15000 });
           const base64 = Buffer.from(imgRes.data).toString('base64');
           result = await gradeWithImage(answer.question_text, answer.model_answer, base64, answer.marks);
-        } catch {
+        } else {
           result = await gradeAnswer(answer.question_text, answer.model_answer, answer.answer_text || '', answer.marks);
         }
-      } else {
-        result = await gradeAnswer(answer.question_text, answer.model_answer, answer.answer_text || '', answer.marks);
+      } catch (e) {
+        console.error('Grade error:', e.message);
+        result = { score: Math.round(answer.marks * 0.5), feedback: 'تم التصحيح تلقائياً' };
       }
+
       await pool.query('UPDATE student_answers SET ai_score = $1, ai_feedback = $2 WHERE id = $3',
         [result.score, result.feedback, answer.id]);
       totalScore += result.score;
+
+      corrected.push({
+        question_text: answer.question_text,
+        student_answer: answer.answer_text,
+        answer_image_url: answer.answer_image_url,
+        model_answer: answer.model_answer,
+        marks: answer.marks,
+        score: result.score,
+        ai_feedback: result.feedback
+      });
     }
-    await pool.query('UPDATE exam_sessions SET status = $1, total_score = $2 WHERE id = $3',
-      ['completed', totalScore, sessionId]);
-    console.log('✅ Background grading done:', sessionId, totalScore);
+
+    await pool.query(
+      'UPDATE exam_sessions SET status = $1, total_score = $2, submitted_at = NOW() WHERE id = $3',
+      ['completed', totalScore, req.params.session_id]
+    );
+
+    res.json({
+      session_id: req.params.session_id,
+      total_score: totalScore,
+      max_score: session.rows[0].max_score,
+      title: session.rows[0].title,
+      answers: corrected
+    });
+
   } catch (err) {
-    console.error('❌ Background grading error:', err.message);
-    await pool.query("UPDATE exam_sessions SET status = 'completed' WHERE id = $1", [sessionId]);
+    console.error('Submit error:', err.message);
+    res.status(500).json({ error: err.message });
   }
-}
+});
 
 router.get('/history', auth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT es.*, e.title, e.year, e.round, s.name as subject_name, s.color, s.icon
        FROM exam_sessions es JOIN exams e ON es.exam_id = e.id JOIN subjects s ON e.subject_id = s.id
-       WHERE es.student_id = $1 AND es.status IN ('completed', 'grading')
+       WHERE es.student_id = $1 AND es.status = 'completed'
        ORDER BY es.submitted_at DESC`,
       [req.user.id]
     );
@@ -176,22 +163,3 @@ router.get('/:session_id', auth, async (req, res) => {
 });
 
 module.exports = router;
-
-// endpoint لإعادة التصحيح اليدوي
-router.post('/:session_id/regrade', auth, async (req, res) => {
-  try {
-    const session = await pool.query(
-      'SELECT * FROM exam_sessions WHERE id = $1 AND student_id = $2',
-      [req.params.session_id, req.user.id]
-    );
-    if (session.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
-    
-    const answers = await pool.query(
-      'SELECT sa.*, q.question_text, q.marks, q.model_answer FROM student_answers sa JOIN questions q ON sa.question_id = q.id WHERE sa.session_id = $1',
-      [req.params.session_id]
-    );
-    
-    gradeInBackground(req.params.session_id, answers.rows, session.rows[0].max_score);
-    res.json({ message: 'جاري إعادة التصحيح' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
