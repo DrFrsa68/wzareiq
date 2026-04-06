@@ -172,7 +172,7 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F2FF' },
+  container: { flex: 1, backgroundColor: '#F0F2FF', overflow: 'hidden' },
   circle1: {
     position: 'absolute', top: -100, right: -100,
     width: 300, height: 300, borderRadius: 150,

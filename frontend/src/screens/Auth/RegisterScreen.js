@@ -175,7 +175,7 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F2FF' },
+  container: { flex: 1, backgroundColor: '#F0F2FF', overflow: 'hidden' },
   circle1: { position: 'absolute', top: -100, right: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: '#4F46E520', zIndex: 0 },
   circle2: { position: 'absolute', bottom: -80, left: -60, width: 250, height: 250, borderRadius: 125, backgroundColor: '#818CF820', zIndex: 0 },
   circle3: { position: 'absolute', top: '40%', right: -80, width: 180, height: 180, borderRadius: 90, backgroundColor: '#4F46E510', zIndex: 0 },
