@@ -1,24 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert
+  StyleSheet, ActivityIndicator, Animated, Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { subjectsAPI } from '../../services/api';
 
-const SUBJECT_ICONS = {
-  'الرياضيات': { icon: 'calculator', color: '#4F46E5' },
-  'الفيزياء': { icon: 'planet', color: '#0EA5E9' },
-  'الكيمياء': { icon: 'flask', color: '#10B981' },
-  'الأحياء': { icon: 'leaf', color: '#22C55E' },
-  'اللغة العربية': { icon: 'language', color: '#F59E0B' },
-  'اللغة الإنجليزية': { icon: 'globe', color: '#EF4444' },
-  'الإسلامية': { icon: 'moon', color: '#8B5CF6' },
+const { width } = Dimensions.get('window');
+const CARD_SIZE = (width - 48) / 2;
+
+const SUBJECT_STYLES = {
+  'الرياضيات':     { icon: 'calculator',  color: '#4F46E5', bg: '#EEF2FF' },
+  'الفيزياء':      { icon: 'planet',       color: '#0EA5E9', bg: '#E0F2FE' },
+  'الكيمياء':      { icon: 'flask',        color: '#10B981', bg: '#D1FAE5' },
+  'الأحياء':       { icon: 'leaf',         color: '#22C55E', bg: '#DCFCE7' },
+  'اللغة العربية': { icon: 'language',     color: '#F59E0B', bg: '#FEF3C7' },
+  'اللغة الإنجليزية': { icon: 'globe',    color: '#EF4444', bg: '#FEE2E2' },
+  'الإسلامية':     { icon: 'moon',         color: '#8B5CF6', bg: '#EDE9FE' },
 };
 
 export default function SubjectsScreen({ navigation }) {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadSubjects();
@@ -28,16 +32,15 @@ export default function SubjectsScreen({ navigation }) {
     try {
       const res = await subjectsAPI.getAll();
       setSubjects(res.data);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
     } catch (err) {
-      Alert.alert('خطأ', 'تعذر تحميل المواد');
+      console.log(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getSubjectStyle = (name) => {
-    return SUBJECT_ICONS[name] || { icon: 'book', color: '#4F46E5' };
-  };
+  const getStyle = (name) => SUBJECT_STYLES[name] || { icon: 'book', color: '#4F46E5', bg: '#EEF2FF' };
 
   if (loading) return (
     <View style={styles.center}>
@@ -47,16 +50,49 @@ export default function SubjectsScreen({ navigation }) {
 
   if (subjects.length === 0) return (
     <View style={styles.center}>
-      <Ionicons name="book-outline" size={60} color="#ccc" />
-      <Text style={styles.emptyText}>لا توجد مواد متاحة حالياً</Text>
+      <Ionicons name="book-outline" size={64} color="#ccc" />
+      <Text style={styles.emptyText}>لا توجد مواد متاحة</Text>
     </View>
   );
 
+  const renderItem = ({ item, index }) => {
+    const s = getStyle(item.name);
+    return (
+      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }] }}>
+        <TouchableOpacity
+          style={[styles.card, { borderColor: s.color + '40' }]}
+          onPress={() => navigation.navigate('ExamSearch', { subject: item })}
+          activeOpacity={0.85}>
+          
+          {/* Color Bar */}
+          <View style={[styles.colorBar, { backgroundColor: s.color }]} />
+          
+          {/* Icon */}
+          <View style={[styles.iconBox, { backgroundColor: s.bg }]}>
+            <Ionicons name={s.icon} size={30} color={s.color} />
+          </View>
+
+          {/* Name */}
+          <Text style={styles.subjectName}>{item.name}</Text>
+
+          {/* Arrow */}
+          <View style={[styles.arrow, { backgroundColor: s.color }]}>
+            <Ionicons name="arrow-back" size={14} color="#fff" />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>المواد الدراسية</Text>
-        <Text style={styles.subtitle}>اختر المادة للبدء</Text>
+        <View style={styles.headerBg} />
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>المواد الدراسية</Text>
+          <Text style={styles.subtitle}>اختر المادة وابدأ امتحانك</Text>
+        </View>
       </View>
 
       <FlatList
@@ -66,47 +102,51 @@ export default function SubjectsScreen({ navigation }) {
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const style = getSubjectStyle(item.name);
-          return (
-            <TouchableOpacity
-              style={[styles.card, { borderTopColor: style.color }]}
-              onPress={() => navigation.navigate('ExamSearch', { subject: item })}>
-              <View style={[styles.iconBox, { backgroundColor: style.color + '20' }]}>
-                <Ionicons name={style.icon} size={32} color={style.color} />
-              </View>
-              <Text style={styles.subjectName}>{item.name}</Text>
-              <View style={[styles.badge, { backgroundColor: style.color }]}>
-                <Text style={styles.badgeText}>ابدأ</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={renderItem}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F7' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F5F7' },
-  emptyText: { fontSize: 16, color: '#888', marginTop: 16 },
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
-  title: { fontSize: 28, fontWeight: '800', color: '#1A1A2E', textAlign: 'right' },
-  subtitle: { fontSize: 14, color: '#888', textAlign: 'right', marginTop: 4 },
-  list: { paddingHorizontal: 20, paddingBottom: 30 },
-  row: { justifyContent: 'space-between', marginBottom: 16 },
+  container: { flex: 1, backgroundColor: '#F5F6FA' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
+  emptyText: { fontSize: 16, color: '#888' },
+  header: { marginBottom: 8 },
+  headerBg: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 140,
+    backgroundColor: '#4F46E5',
+    borderBottomLeftRadius: 32, borderBottomRightRadius: 32
+  },
+  headerContent: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 32 },
+  title: { fontSize: 28, fontWeight: '900', color: '#fff', textAlign: 'right' },
+  subtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', textAlign: 'right', marginTop: 4 },
+  list: { paddingHorizontal: 16, paddingBottom: 100 },
+  row: { justifyContent: 'space-between', marginBottom: 14 },
   card: {
-    width: '48%', backgroundColor: '#fff', borderRadius: 18,
-    padding: 20, alignItems: 'center', borderTopWidth: 4,
+    width: CARD_SIZE, backgroundColor: '#fff',
+    borderRadius: 20, padding: 18,
+    borderWidth: 1.5,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, shadowRadius: 12, elevation: 4
+    shadowOpacity: 0.07, shadowRadius: 12, elevation: 4,
+    overflow: 'hidden'
+  },
+  colorBar: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 4,
+    borderTopLeftRadius: 20, borderTopRightRadius: 20
   },
   iconBox: {
-    width: 64, height: 64, borderRadius: 18,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12
+    width: 60, height: 60, borderRadius: 16,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 12, alignSelf: 'flex-end'
   },
-  subjectName: { fontSize: 15, fontWeight: '700', color: '#1A1A2E', textAlign: 'center', marginBottom: 12 },
-  badge: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6 },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  subjectName: {
+    fontSize: 15, fontWeight: '800', color: '#1E1B4B',
+    textAlign: 'right', marginBottom: 14
+  },
+  arrow: {
+    width: 28, height: 28, borderRadius: 8,
+    justifyContent: 'center', alignItems: 'center',
+    alignSelf: 'flex-start'
+  },
 });
