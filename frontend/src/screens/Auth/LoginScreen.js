@@ -174,19 +174,19 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F2FF' },
   circle1: {
-    position: 'absolute', top: -80, right: -80,
-    width: 250, height: 250, borderRadius: 125,
-    backgroundColor: '#4F46E520'
+    position: 'absolute', top: -100, right: -100,
+    width: 300, height: 300, borderRadius: 150,
+    backgroundColor: '#4F46E520', zIndex: 0
   },
   circle2: {
-    position: 'absolute', top: 100, left: -60,
-    width: 180, height: 180, borderRadius: 90,
-    backgroundColor: '#818CF820'
+    position: 'absolute', top: '30%', left: -80,
+    width: 200, height: 200, borderRadius: 100,
+    backgroundColor: '#818CF820', zIndex: 0
   },
   circle3: {
-    position: 'absolute', bottom: -60, right: -40,
-    width: 200, height: 200, borderRadius: 100,
-    backgroundColor: '#4F46E515'
+    position: 'absolute', bottom: -80, right: -60,
+    width: 250, height: 250, borderRadius: 125,
+    backgroundColor: '#4F46E515', zIndex: 0
   },
   inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
   logoContainer: { alignItems: 'center', marginBottom: 40 },

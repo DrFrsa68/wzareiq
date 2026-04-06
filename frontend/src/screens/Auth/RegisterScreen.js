@@ -85,6 +85,7 @@ export default function RegisterScreen({ navigation }) {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.circle1} />
       <View style={styles.circle2} />
+      <View style={styles.circle3} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -175,8 +176,10 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F2FF' },
-  circle1: { position: 'absolute', top: -80, right: -80, width: 250, height: 250, borderRadius: 125, backgroundColor: '#4F46E520' },
-  circle2: { position: 'absolute', bottom: -60, left: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: '#818CF820' },
+  circle1: { position: 'absolute', top: -100, right: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: '#4F46E520', zIndex: 0 },
+  circle2: { position: 'absolute', bottom: -80, left: -60, width: 250, height: 250, borderRadius: 125, backgroundColor: '#818CF820', zIndex: 0 },
+  circle3: { position: 'absolute', top: '40%', right: -80, width: 180, height: 180, borderRadius: 90, backgroundColor: '#4F46E510', zIndex: 0 },
+  circle3: { position: 'absolute', top: '40%', right: -80, width: 180, height: 180, borderRadius: 90, backgroundColor: '#4F46E510', zIndex: 0 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40, maxWidth: 480, width: '100%', alignSelf: 'center' },
   logoContainer: { alignItems: 'center', marginBottom: 32 },
   logoBox: { width: 80, height: 80, borderRadius: 22, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', marginBottom: 12, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.35, shadowRadius: 18, elevation: 10 },
