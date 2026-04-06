@@ -57,6 +57,7 @@ export default function HomeScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4F46E5" />}>
 
       {/* Header */}
+      <View style={styles.innerContainer}>
       <View style={styles.header}>
         <View style={styles.headerBg} />
         <Animated.View style={[styles.headerContent, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -163,12 +164,14 @@ export default function HomeScreen({ navigation }) {
 
         <View style={{ height: 100 }} />
       </Animated.View>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
+  innerContainer: { maxWidth: 600, width: '100%', alignSelf: 'center' },
   header: { marginBottom: 8 },
   headerBg: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 200,
@@ -220,7 +223,9 @@ const styles = StyleSheet.create({
   actionsCol: { flex: 1, gap: 12 },
   actionCardSmall: {
     flex: 1, borderRadius: 16, padding: 16,
-    alignItems: 'center', justifyContent: 'center', gap: 8
+    alignItems: 'center', justifyContent: 'center', gap: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2
   },
   actionTitleSmall: { fontSize: 13, fontWeight: '700', color: '#4F46E5' },
   recentCard: {
