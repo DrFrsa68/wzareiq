@@ -11,10 +11,14 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('تسجيل الخروج', 'هل أنت متأكد؟', [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'خروج', style: 'destructive', onPress: logout }
-    ]);
+    if (typeof window !== 'undefined') {
+      if (window.confirm('هل أنت متأكد من تسجيل الخروج؟')) logout();
+    } else {
+      Alert.alert('تسجيل الخروج', 'هل أنت متأكد؟', [
+        { text: 'إلغاء', style: 'cancel' },
+        { text: 'خروج', style: 'destructive', onPress: logout }
+      ]);
+    }
   };
 
   return (
