@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     width: 200, height: 200, borderRadius: 100,
     backgroundColor: '#4F46E515'
   },
-  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
   logoContainer: { alignItems: 'center', marginBottom: 40 },
   logoBox: {
     width: 88, height: 88, borderRadius: 24,
@@ -214,10 +214,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, height: 56,
     borderWidth: 2, borderColor: 'transparent',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    outlineStyle: 'none'
   },
   inputBoxFocused: { borderColor: '#4F46E5', shadowColor: '#4F46E5', shadowOpacity: 0.15 },
-  input: { flex: 1, fontSize: 15, color: '#1E1B4B', marginHorizontal: 10 },
+  input: { flex: 1, fontSize: 15, color: '#1E1B4B', marginHorizontal: 10, outlineStyle: 'none' },
   btn: {
     backgroundColor: '#4F46E5', borderRadius: 16, height: 56,
     flexDirection: 'row-reverse', justifyContent: 'center', alignItems: 'center',
@@ -235,3 +236,4 @@ const styles = StyleSheet.create({
   },
   registerText: { color: '#4F46E5', fontSize: 16, fontWeight: '700' },
 });
+// web fix
