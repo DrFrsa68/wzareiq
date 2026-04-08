@@ -343,7 +343,8 @@ export default function ExamScreen({ route, navigation }) {
       <View style={styles.nav}>
         {current > 0 ? (
           <TouchableOpacity style={styles.navBtn} onPress={goPrev}>
-            <Ionicons name="chevron-forward" size={20} color="#555" />
+            {/* تغيير من chevron-forward إلى chevron-back للRTL */}
+            <Ionicons name="chevron-back" size={20} color="#555" />
             <Text style={styles.navBtnText}>السابق</Text>
           </TouchableOpacity>
         ) : <View style={{ width: 90 }} />}
@@ -356,7 +357,8 @@ export default function ExamScreen({ route, navigation }) {
         ) : (
           <TouchableOpacity style={[styles.navBtnNext, { backgroundColor: accentColor }]} onPress={goNext}>
             <Text style={styles.navBtnNextText}>التالي</Text>
-            <Ionicons name="chevron-back" size={20} color="#fff" />
+            {/* تغيير من chevron-back إلى chevron-forward للRTL */}
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
@@ -369,9 +371,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16, backgroundColor: '#F5F6FA' },
   submitingIcon: { width: 80, height: 80, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   loadingText: { fontSize: 16, fontWeight: '700' },
-  loadingSub: { fontSize: 13, color: '#9CA3AF' },
+  loadingSub: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
   header: { paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14 },
-  headerTop: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   timerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
   timerBadgeWarning: { backgroundColor: '#FEE2E2' },
   timerText: { fontSize: 14, fontWeight: '800', color: '#fff' },
@@ -381,29 +383,29 @@ const styles = StyleSheet.create({
   progressBar: { height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2, marginBottom: 12 },
   progressFill: { height: 4, borderRadius: 2 },
   dotsScroll: { maxHeight: 28 },
-  dots: { flexDirection: 'row-reverse', gap: 6, paddingHorizontal: 4 },
+  dots: { flexDirection: 'row', gap: 6, paddingHorizontal: 4 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
   dotActive: { backgroundColor: '#fff', width: 20 },
   dotAnswered: { backgroundColor: 'rgba(255,255,255,0.7)' },
   content: { flex: 1, padding: 16 },
-  questionMeta: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  questionMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   questionNumBadge: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   questionNumText: { fontSize: 13, fontWeight: '700' },
   questionMarks: { fontSize: 13, fontWeight: '700' },
   questionCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   questionText: { fontSize: 16, color: '#1E1B4B', textAlign: 'right', lineHeight: 28 },
-  modeTabs: { flexDirection: 'row-reverse', gap: 8, marginBottom: 14 },
-  modeTab: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: '#F3F4F6' },
+  modeTabs: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  modeTab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: '#F3F4F6' },
   modeTabText: { fontSize: 13, fontWeight: '600', color: '#888' },
-  answerInput: { backgroundColor: '#fff', borderRadius: 16, padding: 16, fontSize: 15, color: '#1E1B4B', minHeight: 140, textAlignVertical: 'top', borderWidth: 2, outlineStyle: 'none' },
-  uploadingRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 10 },
+  answerInput: { backgroundColor: '#fff', borderRadius: 16, padding: 16, fontSize: 15, color: '#1E1B4B', minHeight: 140, textAlignVertical: 'top', borderWidth: 2, outlineStyle: 'none', textAlign: 'right' },
+  uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 10 },
   uploadingText: { fontSize: 13, fontWeight: '600' },
-  nav: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-  navBtn: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  nav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F3F4F6' },
+  navBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
   navBtnText: { fontSize: 14, fontWeight: '700', color: '#555' },
-  navBtnNext: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 },
+  navBtnNext: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 },
   navBtnNextText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-  submitBtn: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 },
+  submitBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 },
   submitBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   resultHeader: { paddingTop: 60, paddingBottom: 32, alignItems: 'center', paddingHorizontal: 20 },
   resultCircle: { width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
@@ -411,13 +413,13 @@ const styles = StyleSheet.create({
   resultLabel: { fontSize: 14, color: '#fff', fontWeight: '600' },
   resultTitle: { fontSize: 17, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 6 },
   resultScore: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
-  resultActions: { flexDirection: 'row-reverse', gap: 12, margin: 16 },
-  resultBtn: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 14, height: 48, borderWidth: 2 },
+  resultActions: { flexDirection: 'row', gap: 12, margin: 16 },
+  resultBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 14, height: 48, borderWidth: 2 },
   resultBtnFill: { borderWidth: 0 },
   resultBtnText: { fontSize: 14, fontWeight: '700' },
   reviewTitle: { fontSize: 17, fontWeight: '800', color: '#1E1B4B', textAlign: 'right', marginHorizontal: 16, marginBottom: 12 },
   answerCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginHorizontal: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  answerCardHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  answerCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   questionNum: { fontSize: 14, fontWeight: '700', color: '#1E1B4B' },
   scoreTag: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
   scoreTagText: { fontSize: 13, fontWeight: '800' },

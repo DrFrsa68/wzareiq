@@ -103,7 +103,8 @@ export default function ExamSearchScreen({ route, navigation }) {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: subjectColor }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-forward" size={22} color="#fff" />
+          {/* تغيير من chevron-forward إلى chevron-back للRTL */}
+          <Ionicons name="chevron-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>{subject.name}</Text>
@@ -179,7 +180,7 @@ export default function ExamSearchScreen({ route, navigation }) {
             {loading
               ? <ActivityIndicator color="#fff" />
               : <>
-                  <Ionicons name="search" size={20} color={canSearch ? '#fff' : '#9CA3AF'} style={{ marginLeft: 8 }} />
+                  <Ionicons name="search" size={20} color={canSearch ? '#fff' : '#9CA3AF'} style={{ marginRight: 8 }} />
                   <Text style={[styles.searchBtnText, { color: canSearch ? '#fff' : '#9CA3AF' }]}>
                     البحث عن الامتحانات
                   </Text>
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
   header: {
     paddingTop: 52, paddingBottom: 20, paddingHorizontal: 16,
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     borderBottomLeftRadius: 24, borderBottomRightRadius: 24
   },
   backBtn: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
   section: { margin: 16, marginBottom: 4 },
   disabled: { opacity: 0.4 },
   stepHeader: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 12
   },
   stepTitle: { fontSize: 15, fontWeight: '700', color: '#1E1B4B' },
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   stepNum: { fontSize: 13, fontWeight: '800' },
   typeCards: { gap: 10 },
   typeCard: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#fff', borderRadius: 14, padding: 14,
     borderWidth: 2, borderColor: '#E5E7EB',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
@@ -267,17 +268,17 @@ const styles = StyleSheet.create({
   typeInfo: { flex: 1 },
   typeLabel: { fontSize: 15, fontWeight: '700', color: '#1E1B4B', textAlign: 'right' },
   typeDesc: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 2 },
-  chipsRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 16, paddingVertical: 9,
     borderRadius: 20, backgroundColor: '#fff',
     borderWidth: 1.5, borderColor: '#E5E7EB'
   },
   chipText: { fontSize: 14, fontWeight: '600', color: '#555' },
-  noData: { fontSize: 13, color: '#aaa' },
+  noData: { fontSize: 13, color: '#aaa', textAlign: 'right' },
   searchBtn: {
     margin: 16, borderRadius: 16, height: 54,
-    flexDirection: 'row-reverse', justifyContent: 'center', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
     marginTop: 20
   },
   searchBtnText: { fontSize: 16, fontWeight: '700' },
@@ -290,12 +291,12 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 2
   },
-  examCardLeft: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, flex: 1 },
+  examCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   examCardIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   examInfo: { flex: 1 },
   examTitle: { fontSize: 14, fontWeight: '700', color: '#1E1B4B', textAlign: 'right', marginBottom: 4 },
   examMeta: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginBottom: 6 },
-  examBadge: { alignSelf: 'flex-end', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
+  examBadge: { alignSelf: 'flex-start', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   examBadgeText: { fontSize: 12, fontWeight: '700' },
-  startBtn: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  startBtn: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
 });

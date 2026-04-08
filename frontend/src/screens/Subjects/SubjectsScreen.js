@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Animated, Dimensions
+  StyleSheet, ActivityIndicator, Animated, Dimensions, I18nManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { subjectsAPI } from '../../services/api';
@@ -75,9 +75,9 @@ export default function SubjectsScreen({ navigation }) {
           {/* Name */}
           <Text style={styles.subjectName}>{item.name}</Text>
 
-          {/* Arrow */}
+          {/* Arrow - تغيير من arrow-back إلى arrow-forward للRTL */}
           <View style={[styles.arrow, { backgroundColor: s.color }]}>
-            <Ionicons name="arrow-back" size={14} color="#fff" />
+            <Ionicons name="arrow-forward" size={14} color="#fff" />
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -111,7 +111,7 @@ export default function SubjectsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-  emptyText: { fontSize: 16, color: '#888' },
+  emptyText: { fontSize: 16, color: '#888', textAlign: 'center' },
   header: { marginBottom: 8 },
   headerBg: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 140,

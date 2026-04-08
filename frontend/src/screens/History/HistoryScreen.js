@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   headerContent: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 32 },
   title: { fontSize: 26, fontWeight: '900', color: '#fff', textAlign: 'right' },
   subtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', textAlign: 'right', marginTop: 4 },
-  filtersRow: { flexDirection: 'row-reverse', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
+  filtersRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
   filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#E5E7EB' },
   filterChipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
   filterText: { fontSize: 13, fontWeight: '600', color: '#555' },
@@ -147,16 +147,35 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 100 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
   emptyIcon: { width: 96, height: 96, borderRadius: 28, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' },
-  emptyTitle: { fontSize: 16, color: '#888', fontWeight: '600' },
+  emptyTitle: { fontSize: 16, color: '#888', fontWeight: '600', textAlign: 'center' },
   startBtn: { backgroundColor: '#4F46E5', borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 },
   startBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, overflow: 'hidden' },
-  cardAccent: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 4 },
-  subjectIcon: { width: 46, height: 46, borderRadius: 13, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
+  card: { 
+    backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, 
+    flexDirection: 'row', alignItems: 'center', 
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, 
+    overflow: 'hidden' 
+  },
+  cardAccent: { 
+    position: 'absolute', 
+    left: 0,  // تغيير من right إلى left
+    top: 0, bottom: 0, 
+    width: 4 
+  },
+  subjectIcon: { 
+    width: 46, height: 46, borderRadius: 13, 
+    justifyContent: 'center', alignItems: 'center', 
+    marginRight: 12  // تغيير من marginLeft إلى marginRight
+  },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: '#1E1B4B', textAlign: 'right', marginBottom: 3 },
   cardMeta: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginBottom: 3 },
   cardDate: { fontSize: 11, color: '#C4C4C4', textAlign: 'right' },
-  scoreCircle: { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 4 },
+  scoreCircle: { 
+    width: 52, height: 52, borderRadius: 14, 
+    justifyContent: 'center', alignItems: 'center', 
+    marginLeft: 4  // تغيير من marginRight إلى marginLeft
+  },
   scoreText: { fontSize: 14, fontWeight: '800' },
 });

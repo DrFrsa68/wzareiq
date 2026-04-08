@@ -85,7 +85,8 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.sectionTitle}>القائمة</Text>
         {menuItems.map((item, i) => (
           <TouchableOpacity key={i} style={styles.menuItem} onPress={item.onPress}>
-            <Ionicons name="chevron-back" size={18} color="#ccc" />
+            {/* تغيير من chevron-back إلى chevron-forward للRTL */}
+            <Ionicons name="chevron-forward" size={18} color="#ccc" />
             <View style={styles.menuItemInfo}>
               <Text style={styles.menuItemLabel}>{item.label}</Text>
             </View>
@@ -138,11 +139,11 @@ const styles = StyleSheet.create({
   avatarContainer: { marginTop: 52, marginBottom: 12, alignItems: 'center' },
   avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)' },
   avatarText: { fontSize: 36, fontWeight: '900', color: '#fff' },
-  adminBadge: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 8 },
+  adminBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F59E0B', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 8 },
   adminBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  userName: { fontSize: 22, fontWeight: '900', color: '#1E1B4B', marginTop: 8 },
-  userHandle: { fontSize: 14, color: '#9CA3AF', marginTop: 2 },
-  statsRow: { flexDirection: 'row-reverse', marginHorizontal: 16, gap: 10, marginBottom: 16 },
+  userName: { fontSize: 22, fontWeight: '900', color: '#1E1B4B', marginTop: 8, textAlign: 'center' },
+  userHandle: { fontSize: 14, color: '#9CA3AF', marginTop: 2, textAlign: 'center' },
+  statsRow: { flexDirection: 'row', marginHorizontal: 16, gap: 10, marginBottom: 16 },
   statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   statIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   statValue: { fontSize: 16, fontWeight: '800', color: '#1E1B4B' },
@@ -150,11 +151,11 @@ const styles = StyleSheet.create({
   menuSection: { marginHorizontal: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#9CA3AF', textAlign: 'right', marginBottom: 8, marginRight: 4 },
   menuItem: { backgroundColor: '#fff', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
-  menuIcon: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
+  menuIcon: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 }, // تغيير من marginLeft إلى marginRight
   menuItemInfo: { flex: 1 },
   menuItemLabel: { fontSize: 15, fontWeight: '700', color: '#1E1B4B', textAlign: 'right' },
   menuItemSub: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 2 },
-  logoutBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FEE2E2', borderRadius: 14, height: 52, marginHorizontal: 16, marginBottom: 12 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FEE2E2', borderRadius: 14, height: 52, marginHorizontal: 16, marginBottom: 12 },
   logoutText: { fontSize: 16, fontWeight: '700', color: '#EF4444' },
   version: { textAlign: 'center', fontSize: 12, color: '#C4C4C4', marginBottom: 8 },
 });

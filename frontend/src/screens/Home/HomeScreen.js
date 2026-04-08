@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  RefreshControl, Animated, Dimensions
+  RefreshControl, Animated, Dimensions, I18nManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { sessionsAPI } from '../../services/api';
 
 const { width } = Dimensions.get('window');
+
+// تفعيل RTL
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
@@ -101,7 +105,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             <Text style={styles.actionTitleWhite}>الامتحانات الوزارية</Text>
             <Text style={styles.actionSubWhite}>اختر المادة وابدأ</Text>
-            <Ionicons name="arrow-back-circle" size={24} color="rgba(255,255,255,0.6)" style={styles.actionArrow} />
+            <Ionicons name="arrow-forward-circle" size={24} color="rgba(255,255,255,0.6)" style={styles.actionArrow} />
           </TouchableOpacity>
 
           <View style={styles.actionsCol}>
@@ -140,7 +144,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.recentTitle} numberOfLines={1}>{s.title}</Text>
                     <Text style={styles.recentMeta}>{s.subject_name} • {s.year} • {s.round}</Text>
                   </View>
-                  <Ionicons name="chevron-back" size={18} color="#ccc" />
+                  <Ionicons name="chevron-forward" size={18} color="#ccc" />
                 </TouchableOpacity>
               );
             })}
@@ -175,7 +179,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5', borderBottomLeftRadius: 32, borderBottomRightRadius: 32
   },
   headerContent: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24 },
-  headerTop: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 20, gap: 12 },
+  headerTop: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 20, 
+    gap: 12 
+  },
   avatar: {
     width: 48, height: 48, borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.25)',
@@ -184,11 +193,11 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: '800' },
   greetingBox: { flex: 1 },
-  greeting: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
-  userName: { color: '#fff', fontSize: 22, fontWeight: '800' },
+  greeting: { color: 'rgba(255,255,255,0.8)', fontSize: 13, textAlign: 'right' },
+  userName: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'right' },
   statsBanner: {
     backgroundColor: '#fff', borderRadius: 20, padding: 20,
-    flexDirection: 'row-reverse', justifyContent: 'space-around',
+    flexDirection: 'row', justifyContent: 'space-around',
     shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15, shadowRadius: 20, elevation: 8
   },
@@ -197,9 +206,20 @@ const styles = StyleSheet.create({
   statLbl: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
   statDivider: { width: 1, backgroundColor: '#F3F4F6' },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1E1B4B', textAlign: 'right', marginHorizontal: 20, marginTop: 24, marginBottom: 12 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20, marginTop: 24, marginBottom: 12 },
+  sectionHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginHorizontal: 20, 
+    marginTop: 24, 
+    marginBottom: 12 
+  },
   seeAll: { color: '#4F46E5', fontSize: 13, fontWeight: '700' },
-  actionsGrid: { flexDirection: 'row-reverse', marginHorizontal: 20, gap: 12 },
+  actionsGrid: { 
+    flexDirection: 'row', 
+    marginHorizontal: 20, 
+    gap: 12 
+  },
   actionCard: {
     flex: 2, borderRadius: 20, padding: 20,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
@@ -216,7 +236,7 @@ const styles = StyleSheet.create({
   },
   actionTitleWhite: { color: '#fff', fontSize: 16, fontWeight: '800', textAlign: 'right', marginBottom: 4 },
   actionSubWhite: { color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'right' },
-  actionArrow: { position: 'absolute', bottom: 16, left: 16 },
+  actionArrow: { position: 'absolute', bottom: 16, right: 16 },
   actionsCol: { flex: 1, gap: 12 },
   actionCardSmall: {
     flex: 1, borderRadius: 16, padding: 16,
@@ -241,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF', justifyContent: 'center',
     alignItems: 'center', marginBottom: 20
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1E1B4B', marginBottom: 8 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1E1B4B', marginBottom: 8, textAlign: 'center' },
   emptySub: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   emptyBtn: {
     backgroundColor: '#4F46E5', borderRadius: 14,
