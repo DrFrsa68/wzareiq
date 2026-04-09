@@ -82,7 +82,10 @@ export default function AdminScreen({ navigation }) {
         {quickActions.map((action, i) => (
           <TouchableOpacity key={i}
             style={[styles.actionCard, i === 0 && styles.actionCardWide]}
-            onPress={() => navigation.navigate(action.screen)}>
+            onPress={() => {
+              console.log('ضغط على:', action.screen);
+              navigation.navigate(action.screen);
+            }}>
             <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
               <Ionicons name={action.icon} size={26} color={action.color} />
             </View>
@@ -104,19 +107,19 @@ const styles = StyleSheet.create({
   header: { marginBottom: 8 },
   headerBg: { position: 'absolute', top: 0, left: 0, right: 0, height: 200, backgroundColor: '#4F46E5', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   headerContent: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24 },
-  headerTop: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, marginBottom: 20 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  headerGreeting: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
-  headerName: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  statsBanner: { backgroundColor: '#fff', borderRadius: 20, padding: 20, flexDirection: 'row-reverse', justifyContent: 'space-around', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  headerGreeting: { color: 'rgba(255,255,255,0.8)', fontSize: 13, textAlign: 'right' },
+  headerName: { color: '#fff', fontSize: 20, fontWeight: '800', textAlign: 'right' },
+  statsBanner: { backgroundColor: '#fff', borderRadius: 20, padding: 20, flexDirection: 'row', justifyContent: 'space-around', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
   statItem: { alignItems: 'center' },
   statNum: { fontSize: 24, fontWeight: '900', color: '#1E1B4B' },
   statLabel: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: '#1E1B4B', textAlign: 'right', marginHorizontal: 20, marginTop: 20, marginBottom: 12 },
-  actionsGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', marginHorizontal: 16, gap: 12 },
-  actionCard: { width: '47%', backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
-  actionCardWide: { width: '100%', flexDirection: 'row-reverse', alignItems: 'center', gap: 16 },
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 16, gap: 12 },
+  actionCard: { width: '47%', backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, alignItems: 'flex-end' },
+  actionCardWide: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 16 },
   actionIcon: { width: 52, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   actionTitle: { fontSize: 14, fontWeight: '800', color: '#1E1B4B', textAlign: 'right', marginBottom: 2 },
   actionSub: { fontSize: 12, color: '#9CA3AF', textAlign: 'right' },

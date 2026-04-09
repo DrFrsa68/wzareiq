@@ -63,3 +63,20 @@ router.patch('/students/:id/make-admin', auth, adminOnly, async (req, res) => {
 });
 
 module.exports = router;
+
+// تحديث امتحان
+router.put('/exams/:id', auth, adminOnly, async (req, res) => {
+  const { title, subject_id, year, round, exam_type, duration, total_marks } = req.body;
+  try {
+    await pool.query(
+      `UPDATE exams 
+       SET title = $1, subject_id = $2, year = $3, round = $4, 
+           exam_type = $5, duration = $6, total_marks = $7
+       WHERE id = $8`,
+      [title, subject_id, year, round, exam_type, duration, total_marks, req.params.id]
+    );
+    res.json({ message: 'Exam updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

@@ -17,9 +17,6 @@ import HistoryScreen from '../screens/History/HistoryScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import AdminScreen from '../screens/Admin/AdminScreen';
 import AdminAddExamScreen from '../screens/Admin/AdminAddExamScreen';
-import AdminExamsScreen from "../screens/Admin/AdminExamsScreen";
-import AdminStudentsScreen from "../screens/Admin/AdminStudentsScreen";
-import AdminUploadScreen from "../screens/Admin/AdminUploadScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -58,9 +55,6 @@ function AdminStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="AdminMain" component={AdminScreen} />
       <Stack.Screen name="AdminAddExam" component={AdminAddExamScreen} />
-      <Stack.Screen name="AdminExams" component={AdminExamsScreen} />
-      <Stack.Screen name="AdminStudents" component={AdminStudentsScreen} />
-      <Stack.Screen name="AdminUpload" component={AdminUploadScreen} />
     </Stack.Navigator>
   );
 }

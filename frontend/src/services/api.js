@@ -36,3 +36,10 @@ export const sessionsAPI = {
 };
 
 export default api;
+
+// إضافة دوال الحذف والعرض للإدارة
+export const adminExamsAPI = {
+  getAll: () => api.get('/admin/exams'),
+  delete: (id) => api.delete(`/admin/exams/${id}`),
+  getExam: (id) => api.get(`/exams/${id}`),
+};
