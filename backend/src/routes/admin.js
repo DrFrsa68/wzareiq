@@ -80,3 +80,30 @@ router.put('/exams/:id', auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// حذف امتحان
+router.delete('/exams/:id', auth, adminOnly, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM exams WHERE id = $1', [req.params.id]);
+    res.json({ message: 'تم الحذف' });
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
+// تحديث امتحان
+router.put('/exams/:id', auth, adminOnly, async (req, res) => {
+  try {
+    const { title, subject_id, year, round, exam_type, duration, total_marks } = req.body;
+    await pool.query(
+      `UPDATE exams SET 
+        title = $1, subject_id = $2, year = $3, round = $4, 
+        exam_type = $5, duration = $6, total_marks = $7 
+       WHERE id = $8`,
+      [title, subject_id, year, round, exam_type, duration, total_marks, req.params.id]
+    );
+    res.json({ message: 'تم التحديث' });
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
