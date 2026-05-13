@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  avatar    String?
+  createdAt DateTime @default(now())
+  sessions  ExamSession[]
+}
+
+model Subject {
+  id    String  @id @default(uuid())
+  name  String
+  icon  String
+  color String
+  exams Exam[]
+}
+
+model Exam {
+  id        String   @id @default(uuid())
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  year      Int
+  round     Round
+  type      ExamType
+  duration  Int
+  questions Question[]
+  sessions  ExamSession[]
+}
+
+model Question {
+  id       String        @id @default(uuid())
+  examId   String
+  exam     Exam          @relation(fields: [examId], references: [id])
+  number   Int
+  text     String
+  marks    Int
+  chapter  Int?
+  answer   ModelAnswer?
+  answers  Answer[]
+}
+
+model ModelAnswer {
+  id         String   @id @default(uuid())
+  questionId String   @unique
+  question   Question @relation(fields: [questionId], references: [id])
+  text       String?
+  imageUrl   String?
+}
+
+model ExamSession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id])
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  totalScore  Float?
+  answers     Answer[]
+}
+
+model Answer {
+  id            String      @id @default(uuid())
+  sessionId     String
+  session       ExamSession @relation(fields: [sessionId], references: [id])
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id])
+  studentAnswer String?
+  aiScore       Float?
+  aiFeedback    String?
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Round {
+  FIRST
+  SECOND
+  THIRD
+  PRELIMINARY
+}
+
+enum ExamType {
+  COMPREHENSIVE
+  BY_CHAPTER
+}
