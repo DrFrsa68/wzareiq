@@ -1,15 +1,28 @@
 const prisma = require('../services/prisma');
 const { gradeAnswer } = require('../services/ai.service');
 
+const VALID_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 exports.start = async (req, res) => {
   try {
     const { examId } = req.body;
+
+    if (!examId || !VALID_UUID.test(examId))
+      return res.status(400).json({ error: 'معرف الامتحان غير صالح' });
 
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       include: { questions: { orderBy: { number: 'asc' } } }
     });
     if (!exam) return res.status(404).json({ error: 'الامتحان غير موجود' });
+    if (exam.questions.length === 0)
+      return res.status(400).json({ error: 'الامتحان لا يحتوي على أسئلة' });
+
+    // منع بدء جلسة جديدة إذا عنده جلسة مفتوحة
+    const openSession = await prisma.examSession.findFirst({
+      where: { userId: req.user.id, examId, submittedAt: null }
+    });
+    if (openSession) return res.status(400).json({ error: 'عندك جلسة مفتوحة لهذا الامتحان' });
 
     const session = await prisma.examSession.create({
       data: {
@@ -29,26 +42,47 @@ exports.start = async (req, res) => {
     });
     res.status(201).json(session);
   } catch (err) {
+    console.error('Start error:', err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
 
 exports.saveAnswer = async (req, res) => {
   try {
+    if (!VALID_UUID.test(req.params.id))
+      return res.status(400).json({ error: 'معرف غير صالح' });
+
     const { questionId, studentAnswer } = req.body;
+
+    if (!questionId || !VALID_UUID.test(questionId))
+      return res.status(400).json({ error: 'معرف السؤال غير صالح' });
+    if (studentAnswer && typeof studentAnswer !== 'string')
+      return res.status(400).json({ error: 'الإجابة غير صالحة' });
+    if (studentAnswer && studentAnswer.length > 5000)
+      return res.status(400).json({ error: 'الإجابة طويلة جداً' });
+
+    // تحقق إن الجلسة تخص المستخدم وما سلمت
+    const session = await prisma.examSession.findFirst({
+      where: { id: req.params.id, userId: req.user.id, submittedAt: null }
+    });
+    if (!session) return res.status(403).json({ error: 'غير مصرح أو الجلسة منتهية' });
 
     const answer = await prisma.answer.updateMany({
       where: { sessionId: req.params.id, questionId },
-      data: { studentAnswer }
+      data: { studentAnswer: studentAnswer?.trim() || null }
     });
     res.json(answer);
   } catch (err) {
+    console.error('SaveAnswer error:', err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
 
 exports.submit = async (req, res) => {
   try {
+    if (!VALID_UUID.test(req.params.id))
+      return res.status(400).json({ error: 'معرف غير صالح' });
+
     const session = await prisma.examSession.findUnique({
       where: { id: req.params.id },
       include: {
@@ -61,6 +95,8 @@ exports.submit = async (req, res) => {
     });
 
     if (!session) return res.status(404).json({ error: 'الجلسة غير موجودة' });
+    if (session.userId !== req.user.id) return res.status(403).json({ error: 'غير مصرح' });
+    if (session.submittedAt) return res.status(400).json({ error: 'تم تسليم هذا الامتحان مسبقاً' });
 
     let totalScore = 0;
     for (const answer of session.answers) {
@@ -93,7 +129,7 @@ exports.submit = async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    console.error(err);
+    console.error('Submit error:', err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
@@ -103,16 +139,21 @@ exports.getHistory = async (req, res) => {
     const sessions = await prisma.examSession.findMany({
       where: { userId: req.user.id, submittedAt: { not: null } },
       include: { exam: { include: { subject: true } } },
-      orderBy: { submittedAt: 'desc' }
+      orderBy: { submittedAt: 'desc' },
+      take: 50
     });
     res.json(sessions);
   } catch (err) {
+    console.error('GetHistory error:', err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
 
 exports.getResult = async (req, res) => {
   try {
+    if (!VALID_UUID.test(req.params.id))
+      return res.status(400).json({ error: 'معرف غير صالح' });
+
     const session = await prisma.examSession.findUnique({
       where: { id: req.params.id },
       include: {
@@ -126,8 +167,10 @@ exports.getResult = async (req, res) => {
     });
     if (!session) return res.status(404).json({ error: 'الجلسة غير موجودة' });
     if (session.userId !== req.user.id) return res.status(403).json({ error: 'غير مصرح' });
+
     res.json(session);
   } catch (err) {
+    console.error('GetResult error:', err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
