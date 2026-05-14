@@ -28,15 +28,12 @@ export default function Register() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>حساب جديد</Text>
-
       <TextInput style={styles.input} placeholder="الاسم الكامل" value={name} onChangeText={setName} textAlign="right" />
       <TextInput style={styles.input} placeholder="اسم المستخدم" value={username} onChangeText={setUsername} textAlign="right" autoCapitalize="none" />
       <TextInput style={styles.input} placeholder="كلمة المرور" value={password} onChangeText={setPassword} secureTextEntry textAlign="right" />
-
       <TouchableOpacity style={styles.btn} onPress={handleRegister} disabled={loading}>
         <Text style={styles.btnText}>{loading ? 'جاري التسجيل...' : 'تسجيل'}</Text>
       </TouchableOpacity>
-
       <TouchableOpacity onPress={() => router.back()}>
         <Text style={styles.link}>عندك حساب؟ ادخل</Text>
       </TouchableOpacity>

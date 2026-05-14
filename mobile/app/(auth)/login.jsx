@@ -28,28 +28,11 @@ export default function Login() {
     <View style={styles.container}>
       <Text style={styles.title}>صواب</Text>
       <Text style={styles.subtitle}>الوزاري يبدأ من صواب</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="اسم المستخدم"
-        value={username}
-        onChangeText={setUsername}
-        textAlign="right"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="كلمة المرور"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        textAlign="right"
-      />
-
+      <TextInput style={styles.input} placeholder="اسم المستخدم" value={username} onChangeText={setUsername} textAlign="right" autoCapitalize="none" />
+      <TextInput style={styles.input} placeholder="كلمة المرور" value={password} onChangeText={setPassword} secureTextEntry textAlign="right" />
       <TouchableOpacity style={styles.btn} onPress={handleLogin} disabled={loading}>
         <Text style={styles.btnText}>{loading ? 'جاري الدخول...' : 'دخول'}</Text>
       </TouchableOpacity>
-
       <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
         <Text style={styles.link}>ما عندك حساب؟ سجل الحين</Text>
       </TouchableOpacity>
