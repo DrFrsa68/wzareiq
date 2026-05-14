@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
 import { useAuthStore } from '../../store/auth.store';
 import api from '../../lib/api';
+import { colors, fonts } from '../../lib/theme';
 
 export default function Home() {
   const user = useAuthStore(s => s.user);
@@ -22,7 +23,8 @@ export default function Home() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>أهلاً، {user?.name} 👋</Text>
+        <Image source={require('../../assets/sawabwhite.png')} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.greeting}>أهلاً، {user?.name}</Text>
         <Text style={styles.sub}>جاهز للمراجعة اليوم؟</Text>
       </View>
 
@@ -45,12 +47,13 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  header: { padding: 24, paddingTop: 60, backgroundColor: '#1D52D8', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  greeting: { fontSize: 24, fontWeight: 'bold', color: '#fff', textAlign: 'right' },
-  sub: { fontSize: 14, color: '#a8bef5', textAlign: 'right', marginTop: 4 },
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { padding: 24, paddingTop: 60, backgroundColor: colors.primary, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, alignItems: 'flex-end' },
+  logo: { width: 100, height: 40, marginBottom: 12, alignSelf: 'flex-end' },
+  greeting: { fontSize: 24, fontFamily: fonts.bold, color: colors.white },
+  sub: { fontSize: 14, color: colors.primaryLight, marginTop: 4, fontFamily: fonts.regular },
   statsRow: { flexDirection: 'row', padding: 16, gap: 12, marginTop: 16 },
-  statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  statNum: { fontSize: 24, fontWeight: 'bold', color: '#1D52D8' },
-  statLabel: { fontSize: 11, color: '#666', marginTop: 4, textAlign: 'center' }
+  statCard: { flex: 1, backgroundColor: colors.white, borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  statNum: { fontSize: 24, fontFamily: fonts.bold, color: colors.primary },
+  statLabel: { fontSize: 11, color: colors.textMuted, marginTop: 4, textAlign: 'center', fontFamily: fonts.regular }
 });

@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useAuthStore } from '../../store/auth.store';
 import api from '../../lib/api';
+import { colors, fonts } from '../../lib/theme';
 
 export default function ExamSession() {
   const { examId } = useLocalSearchParams();
-  const user = useAuthStore(s => s.user);
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -104,6 +103,7 @@ export default function ExamSession() {
           textAlign="right"
           value={answers[q.id] || ''}
           onChangeText={text => saveAnswer(q.id, text)}
+          placeholderTextColor={colors.textMuted}
         />
       </ScrollView>
 
@@ -128,24 +128,24 @@ export default function ExamSession() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { fontSize: 18, color: '#666' },
-  header: { backgroundColor: '#1D52D8', paddingTop: 50, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  timer: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  examTitle: { fontSize: 16, color: '#a8bef5' },
-  progressBar: { height: 4, backgroundColor: '#e0e0e0' },
-  progressFill: { height: 4, backgroundColor: '#1D52D8' },
+  container: { flex: 1, backgroundColor: colors.background },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  loadingText: { fontSize: 18, color: colors.textSecondary, fontFamily: fonts.regular },
+  header: { backgroundColor: colors.primary, paddingTop: 50, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  timer: { fontSize: 20, fontFamily: fonts.bold, color: colors.white },
+  examTitle: { fontSize: 16, color: colors.primaryLight, fontFamily: fonts.regular },
+  progressBar: { height: 4, backgroundColor: colors.border },
+  progressFill: { height: 4, backgroundColor: colors.primary },
   body: { flex: 1, padding: 20 },
   questionHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, marginTop: 8 },
-  questionNum: { fontSize: 14, color: '#666' },
-  marks: { fontSize: 14, color: '#1D52D8', fontWeight: 'bold' },
-  questionText: { fontSize: 18, color: '#1a1a2e', textAlign: 'right', lineHeight: 28, marginBottom: 24 },
-  answerInput: { backgroundColor: '#fff', borderRadius: 12, padding: 16, fontSize: 16, minHeight: 150, borderWidth: 1, borderColor: '#e0e0e0', textAlignVertical: 'top' },
-  nav: { flexDirection: 'row', padding: 16, gap: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#f0f0f0' },
+  questionNum: { fontSize: 14, color: colors.textSecondary, fontFamily: fonts.regular },
+  marks: { fontSize: 14, color: colors.primary, fontFamily: fonts.bold },
+  questionText: { fontSize: 18, color: colors.text, textAlign: 'right', lineHeight: 32, marginBottom: 24, fontFamily: fonts.regular },
+  answerInput: { backgroundColor: colors.white, borderRadius: 12, padding: 16, fontSize: 16, minHeight: 150, borderWidth: 1, borderColor: colors.border, textAlignVertical: 'top', fontFamily: fonts.regular },
+  nav: { flexDirection: 'row', padding: 16, gap: 12, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
   navBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: '#f0f0f0', alignItems: 'center' },
-  nextBtn: { backgroundColor: '#1D52D8' },
-  submitBtn: { backgroundColor: '#10B981' },
-  navBtnText: { color: '#333', fontWeight: 'bold' },
-  nextBtnText: { color: '#fff', fontWeight: 'bold' }
+  nextBtn: { backgroundColor: colors.primary },
+  submitBtn: { backgroundColor: colors.success },
+  navBtnText: { color: colors.text, fontFamily: fonts.bold },
+  nextBtnText: { color: colors.white, fontFamily: fonts.bold }
 });

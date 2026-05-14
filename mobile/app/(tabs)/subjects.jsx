@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import api from '../../lib/api';
+import { colors, fonts } from '../../lib/theme';
 
 const ICONS = {
   calculator: '🧮', zap: '⚡', flask: '🧪',
@@ -19,7 +20,7 @@ export default function Subjects() {
     });
   }, []);
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#1D52D8" />;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color={colors.primary} />;
 
   return (
     <ScrollView style={styles.container}>
@@ -42,11 +43,11 @@ export default function Subjects() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1a1a2e', textAlign: 'right', padding: 24, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: colors.background },
+  title: { fontSize: 24, fontFamily: fonts.bold, color: colors.text, textAlign: 'right', padding: 24, paddingTop: 60 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 12 },
-  card: { width: '47%', backgroundColor: '#fff', borderRadius: 16, padding: 20, alignItems: 'center', borderTopWidth: 4, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  card: { width: '47%', backgroundColor: colors.white, borderRadius: 16, padding: 20, alignItems: 'center', borderTopWidth: 4, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   icon: { fontSize: 36, marginBottom: 10 },
-  name: { fontSize: 16, fontWeight: 'bold', color: '#1a1a2e', textAlign: 'center' },
-  count: { fontSize: 12, color: '#888', marginTop: 4 }
+  name: { fontSize: 16, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' },
+  count: { fontSize: 12, color: colors.textMuted, marginTop: 4, fontFamily: fonts.regular }
 });
