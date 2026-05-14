@@ -94,7 +94,7 @@ export default function SelectExam() {
         <Text style={styles.searchBtnText}>🔍 بحث عن الامتحانات</Text>
       </TouchableOpacity>
 
-      {loading && <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />}
+      {loading && <ActivityIndicator size="large" color="#1D52D8" style={{ marginTop: 20 }} />}
 
       {searched && exams.length === 0 && !loading && (
         <Text style={styles.empty}>لا توجد امتحانات متوفرة</Text>
@@ -119,22 +119,22 @@ export default function SelectExam() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA', padding: 20 },
   back: { marginTop: 50, marginBottom: 8 },
-  backText: { color: '#4F46E5', fontSize: 16 },
+  backText: { color: '#1D52D8', fontSize: 16 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a2e', textAlign: 'right', marginBottom: 24 },
   label: { fontSize: 15, fontWeight: '600', color: '#333', textAlign: 'right', marginBottom: 8, marginTop: 16 },
   disabled: { color: '#bbb' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' },
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0' },
-  chipActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
+  chipActive: { backgroundColor: '#1D52D8', borderColor: '#1D52D8' },
   chipText: { color: '#333', fontSize: 14 },
   chipTextActive: { color: '#fff' },
-  searchBtn: { backgroundColor: '#4F46E5', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 32 },
-  searchBtnDisabled: { backgroundColor: '#c7c5ff' },
+  searchBtn: { backgroundColor: '#1D52D8', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 32 },
+  searchBtnDisabled: { backgroundColor: '#a8bef5' },
   searchBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   examCard: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginTop: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   examTitle: { fontSize: 16, fontWeight: 'bold', color: '#1a1a2e', textAlign: 'right' },
   examMeta: { color: '#888', fontSize: 13, textAlign: 'right', marginTop: 4 },
-  startBtn: { backgroundColor: '#4F46E5', borderRadius: 10, padding: 12, alignItems: 'center', marginTop: 12 },
+  startBtn: { backgroundColor: '#1D52D8', borderRadius: 10, padding: 12, alignItems: 'center', marginTop: 12 },
   startBtnText: { color: '#fff', fontWeight: 'bold' },
   empty: { color: '#888', textAlign: 'center', marginTop: 16 }
 });

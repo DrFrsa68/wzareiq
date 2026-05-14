@@ -21,7 +21,7 @@ export default function History() {
     }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#4F46E5" />;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#1D52D8" />;
 
   return (
     <ScrollView style={styles.container}>
@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
   subject: { fontSize: 16, fontWeight: 'bold', color: '#1a1a2e' },
   percent: { fontSize: 20, fontWeight: 'bold' },
   meta: { color: '#666', fontSize: 13, textAlign: 'right', marginBottom: 4 },
-  score: { color: '#4F46E5', fontSize: 14, textAlign: 'right', marginBottom: 4 },
+  score: { color: '#1D52D8', fontSize: 14, textAlign: 'right', marginBottom: 4 },
   date: { color: '#aaa', fontSize: 12, textAlign: 'right' }
 });

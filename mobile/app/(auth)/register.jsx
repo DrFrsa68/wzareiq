@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA', justifyContent: 'center', padding: 24 },
   title: { fontSize: 32, fontWeight: 'bold', color: '#1a1a2e', textAlign: 'center', marginBottom: 48 },
   input: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0' },
-  btn: { backgroundColor: '#4F46E5', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 16 },
+  btn: { backgroundColor: '#1D52D8', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 16 },
   btnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  link: { textAlign: 'center', color: '#4F46E5', fontSize: 15 }
+  link: { textAlign: 'center', color: '#1D52D8', fontSize: 15 }
 });

@@ -17,7 +17,7 @@ export default function Result() {
 
   if (loading) return (
     <View style={styles.loading}>
-      <ActivityIndicator size="large" color="#4F46E5" />
+      <ActivityIndicator size="large" color="#1D52D8" />
     </View>
   );
 
@@ -65,22 +65,22 @@ export default function Result() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#4F46E5', paddingTop: 60, paddingBottom: 32, alignItems: 'center' },
-  subject: { color: '#c7c5ff', fontSize: 14, marginBottom: 4 },
+  header: { backgroundColor: '#1D52D8', paddingTop: 60, paddingBottom: 32, alignItems: 'center' },
+  subject: { color: '#a8bef5', fontSize: 14, marginBottom: 4 },
   title: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
   scoreCircle: { flexDirection: 'row', alignItems: 'flex-end', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 60, paddingHorizontal: 24, paddingVertical: 16 },
   scoreNum: { fontSize: 48, fontWeight: 'bold', color: '#fff' },
-  scoreTotal: { fontSize: 20, color: '#c7c5ff', marginBottom: 8, marginLeft: 4 },
+  scoreTotal: { fontSize: 20, color: '#a8bef5', marginBottom: 8, marginLeft: 4 },
   percent: { color: '#fff', fontSize: 18, marginTop: 8 },
   body: { padding: 16 },
   answerCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   answerHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   answerNum: { fontSize: 14, color: '#666' },
-  answerScore: { fontSize: 14, fontWeight: 'bold', color: '#4F46E5' },
+  answerScore: { fontSize: 14, fontWeight: 'bold', color: '#1D52D8' },
   questionText: { fontSize: 15, color: '#1a1a2e', textAlign: 'right', marginBottom: 12 },
   label: { fontSize: 12, color: '#888', textAlign: 'right', marginBottom: 4 },
   studentAnswer: { fontSize: 14, color: '#333', textAlign: 'right', backgroundColor: '#f8f9fa', padding: 10, borderRadius: 8, marginBottom: 10 },
   modelAnswer: { fontSize: 14, color: '#10B981', textAlign: 'right', backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8 },
-  backBtn: { margin: 16, backgroundColor: '#4F46E5', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 40 },
+  backBtn: { margin: 16, backgroundColor: '#1D52D8', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 40 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
 });

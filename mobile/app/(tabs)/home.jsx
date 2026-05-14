@@ -46,11 +46,11 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
-  header: { padding: 24, paddingTop: 60, backgroundColor: '#4F46E5', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  header: { padding: 24, paddingTop: 60, backgroundColor: '#1D52D8', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   greeting: { fontSize: 24, fontWeight: 'bold', color: '#fff', textAlign: 'right' },
-  sub: { fontSize: 14, color: '#c7c5ff', textAlign: 'right', marginTop: 4 },
+  sub: { fontSize: 14, color: '#a8bef5', textAlign: 'right', marginTop: 4 },
   statsRow: { flexDirection: 'row', padding: 16, gap: 12, marginTop: 16 },
   statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  statNum: { fontSize: 24, fontWeight: 'bold', color: '#4F46E5' },
+  statNum: { fontSize: 24, fontWeight: 'bold', color: '#1D52D8' },
   statLabel: { fontSize: 11, color: '#666', marginTop: 4, textAlign: 'center' }
 });

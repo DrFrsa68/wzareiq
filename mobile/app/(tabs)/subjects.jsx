@@ -19,7 +19,7 @@ export default function Subjects() {
     });
   }, []);
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#4F46E5" />;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#1D52D8" />;
 
   return (
     <ScrollView style={styles.container}>
