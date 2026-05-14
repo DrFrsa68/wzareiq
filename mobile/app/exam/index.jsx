@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import api from '../../lib/api';
 import { colors, fonts } from '../../lib/theme';
@@ -18,6 +18,10 @@ const ROUND_LABELS = {
 
 export default function SelectExam() {
   const { subjectId, subjectName } = useLocalSearchParams();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const maxWidth = isTablet ? 700 : '100%';
+
   const [type, setType] = useState(null);
   const [year, setYear] = useState(null);
   const [round, setRound] = useState(null);
@@ -52,19 +56,23 @@ export default function SelectExam() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
+    <ScrollView style={styles.container} contentContainerStyle={{ alignItems: 'center' }}>
+      <View style={[styles.header, { paddingHorizontal: isTablet ? 48 : 20 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
           <Text style={styles.backText}>→ رجوع</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{subjectName}</Text>
+        <Text style={[styles.title, { fontSize: isTablet ? 36 : 28 }]}>{subjectName}</Text>
       </View>
 
-      <View style={styles.body}>
+      <View style={[styles.body, { maxWidth, width: '100%' }]}>
         <Text style={styles.label}>نوع الامتحان</Text>
         <View style={styles.row}>
           {EXAM_TYPES.map(t => (
-            <TouchableOpacity key={t.value} style={[styles.chip, type === t.value && styles.chipActive]} onPress={() => setType(t.value)}>
+            <TouchableOpacity
+              key={t.value}
+              style={[styles.chip, type === t.value && styles.chipActive]}
+              onPress={() => setType(t.value)}
+            >
               <Text style={[styles.chipText, type === t.value && styles.chipTextActive]}>{t.label}</Text>
             </TouchableOpacity>
           ))}
@@ -73,7 +81,11 @@ export default function SelectExam() {
         <Text style={[styles.label, !type && styles.disabled]}>السنة</Text>
         <View style={styles.row}>
           {years.map(y => (
-            <TouchableOpacity key={y} style={[styles.chip, year === y && styles.chipActive]} onPress={() => type && setYear(y)}>
+            <TouchableOpacity
+              key={y}
+              style={[styles.chip, year === y && styles.chipActive]}
+              onPress={() => type && setYear(y)}
+            >
               <Text style={[styles.chipText, year === y && styles.chipTextActive]}>{y}</Text>
             </TouchableOpacity>
           ))}
@@ -83,7 +95,11 @@ export default function SelectExam() {
         <Text style={[styles.label, !year && styles.disabled]}>الدور</Text>
         <View style={styles.row}>
           {rounds.map(r => (
-            <TouchableOpacity key={r} style={[styles.chip, round === r && styles.chipActive]} onPress={() => year && setRound(r)}>
+            <TouchableOpacity
+              key={r}
+              style={[styles.chip, round === r && styles.chipActive]}
+              onPress={() => year && setRound(r)}
+            >
               <Text style={[styles.chipText, round === r && styles.chipTextActive]}>{ROUND_LABELS[r]}</Text>
             </TouchableOpacity>
           ))}
@@ -120,11 +136,11 @@ export default function SelectExam() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 24, paddingHorizontal: 20 },
+  header: { width: '100%', backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 24 },
   back: { marginBottom: 8 },
   backText: { color: colors.primaryLight, fontSize: 16, fontFamily: fonts.regular },
-  title: { fontSize: 28, fontFamily: fonts.bold, color: colors.white },
-  body: { padding: 20 },
+  title: { fontFamily: fonts.bold, color: colors.white },
+  body: { padding: 20, alignSelf: 'center' },
   label: { fontSize: 15, fontFamily: fonts.bold, color: colors.text, textAlign: 'right', marginBottom: 8, marginTop: 16 },
   disabled: { color: colors.border },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' },

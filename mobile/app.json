@@ -20,6 +20,14 @@
     ],
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4a1f6981-db50-4271-87c8-3e6fb651b48d"
+      }
+    },
+    "android": {
+      "package": "com.sawab.app"
+    }
   }
 }

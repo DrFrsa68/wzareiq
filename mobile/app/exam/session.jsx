@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import api from '../../lib/api';
 import { colors, fonts } from '../../lib/theme';
 
 export default function ExamSession() {
   const { examId } = useLocalSearchParams();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const maxWidth = isTablet ? 700 : '100%';
+
   const [session, setSession] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -80,7 +84,7 @@ export default function ExamSession() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.timer}>{formatTime(seconds)}</Text>
+        <Text style={[styles.timer, { fontSize: isTablet ? 26 : 20 }]}>{formatTime(seconds)}</Text>
         <Text style={styles.examTitle}>{session.exam.subject?.name}</Text>
       </View>
 
@@ -88,40 +92,44 @@ export default function ExamSession() {
         <View style={[styles.progressFill, { width: `${progress}%` }]} />
       </View>
 
-      <ScrollView style={styles.body}>
-        <View style={styles.questionHeader}>
-          <Text style={styles.marks}>{q.marks} درجة</Text>
-          <Text style={styles.questionNum}>السؤال {current + 1} / {questions.length}</Text>
+      <ScrollView style={styles.body} contentContainerStyle={{ alignItems: 'center' }}>
+        <View style={[styles.questionContainer, { maxWidth, width: '100%' }]}>
+          <View style={styles.questionHeader}>
+            <Text style={styles.marks}>{q.marks} درجة</Text>
+            <Text style={styles.questionNum}>السؤال {current + 1} / {questions.length}</Text>
+          </View>
+
+          <Text style={[styles.questionText, { fontSize: isTablet ? 22 : 18 }]}>{q.text}</Text>
+
+          <TextInput
+            style={[styles.answerInput, { minHeight: isTablet ? 200 : 150, fontSize: isTablet ? 18 : 16 }]}
+            multiline
+            placeholder="اكتب إجابتك هنا..."
+            textAlign="right"
+            value={answers[q.id] || ''}
+            onChangeText={text => saveAnswer(q.id, text)}
+            placeholderTextColor={colors.textMuted}
+          />
         </View>
-
-        <Text style={styles.questionText}>{q.text}</Text>
-
-        <TextInput
-          style={styles.answerInput}
-          multiline
-          placeholder="اكتب إجابتك هنا..."
-          textAlign="right"
-          value={answers[q.id] || ''}
-          onChangeText={text => saveAnswer(q.id, text)}
-          placeholderTextColor={colors.textMuted}
-        />
       </ScrollView>
 
-      <View style={styles.nav}>
-        {current > 0 && (
-          <TouchableOpacity style={styles.navBtn} onPress={() => setCurrent(c => c - 1)}>
-            <Text style={styles.navBtnText}>السابق</Text>
-          </TouchableOpacity>
-        )}
-        {current < questions.length - 1 ? (
-          <TouchableOpacity style={[styles.navBtn, styles.nextBtn]} onPress={() => setCurrent(c => c + 1)}>
-            <Text style={styles.nextBtnText}>التالي</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={[styles.navBtn, styles.submitBtn]} onPress={handleSubmit} disabled={submitting}>
-            <Text style={styles.nextBtnText}>{submitting ? 'جاري التسليم...' : 'تسليم الامتحان'}</Text>
-          </TouchableOpacity>
-        )}
+      <View style={[styles.nav, { paddingHorizontal: isTablet ? 48 : 16 }]}>
+        <View style={[styles.navInner, { maxWidth, width: '100%', alignSelf: 'center' }]}>
+          {current > 0 && (
+            <TouchableOpacity style={styles.navBtn} onPress={() => setCurrent(c => c - 1)}>
+              <Text style={styles.navBtnText}>السابق</Text>
+            </TouchableOpacity>
+          )}
+          {current < questions.length - 1 ? (
+            <TouchableOpacity style={[styles.navBtn, styles.nextBtn]} onPress={() => setCurrent(c => c + 1)}>
+              <Text style={styles.nextBtnText}>التالي</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.navBtn, styles.submitBtn]} onPress={handleSubmit} disabled={submitting}>
+              <Text style={styles.nextBtnText}>{submitting ? 'جاري التسليم...' : 'تسليم الامتحان'}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -132,17 +140,19 @@ const styles = StyleSheet.create({
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   loadingText: { fontSize: 18, color: colors.textSecondary, fontFamily: fonts.regular },
   header: { backgroundColor: colors.primary, paddingTop: 50, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  timer: { fontSize: 20, fontFamily: fonts.bold, color: colors.white },
+  timer: { fontFamily: fonts.bold, color: colors.white },
   examTitle: { fontSize: 16, color: colors.primaryLight, fontFamily: fonts.regular },
   progressBar: { height: 4, backgroundColor: colors.border },
   progressFill: { height: 4, backgroundColor: colors.primary },
-  body: { flex: 1, padding: 20 },
+  body: { flex: 1 },
+  questionContainer: { padding: 20, alignSelf: 'center' },
   questionHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, marginTop: 8 },
   questionNum: { fontSize: 14, color: colors.textSecondary, fontFamily: fonts.regular },
   marks: { fontSize: 14, color: colors.primary, fontFamily: fonts.bold },
-  questionText: { fontSize: 18, color: colors.text, textAlign: 'right', lineHeight: 32, marginBottom: 24, fontFamily: fonts.regular },
-  answerInput: { backgroundColor: colors.white, borderRadius: 12, padding: 16, fontSize: 16, minHeight: 150, borderWidth: 1, borderColor: colors.border, textAlignVertical: 'top', fontFamily: fonts.regular },
-  nav: { flexDirection: 'row', padding: 16, gap: 12, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border },
+  questionText: { color: colors.text, textAlign: 'right', lineHeight: 32, marginBottom: 24, fontFamily: fonts.regular },
+  answerInput: { backgroundColor: colors.white, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.border, textAlignVertical: 'top', fontFamily: fonts.regular },
+  nav: { backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.border, padding: 16 },
+  navInner: { flexDirection: 'row', gap: 12 },
   navBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: '#f0f0f0', alignItems: 'center' },
   nextBtn: { backgroundColor: colors.primary },
   submitBtn: { backgroundColor: colors.success },
