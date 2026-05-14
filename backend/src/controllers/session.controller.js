@@ -1,4 +1,5 @@
 const prisma = require('../services/prisma');
+const { gradeAnswer } = require('../services/ai.service');
 
 exports.start = async (req, res) => {
   try {
@@ -48,9 +49,8 @@ exports.saveAnswer = async (req, res) => {
 
 exports.submit = async (req, res) => {
   try {
-    const session = await prisma.examSession.update({
+    const session = await prisma.examSession.findUnique({
       where: { id: req.params.id },
-      data: { submittedAt: new Date() },
       include: {
         answers: {
           include: {
@@ -59,8 +59,41 @@ exports.submit = async (req, res) => {
         }
       }
     });
-    res.json(session);
+
+    if (!session) return res.status(404).json({ error: 'الجلسة غير موجودة' });
+
+    let totalScore = 0;
+    for (const answer of session.answers) {
+      if (answer.question.answer && answer.studentAnswer) {
+        const result = await gradeAnswer(
+          answer.question.text,
+          answer.question.answer.text,
+          answer.studentAnswer
+        );
+        const aiScore = (result.score / 10) * answer.question.marks;
+        totalScore += aiScore;
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: { aiScore, aiFeedback: result.feedback }
+        });
+      }
+    }
+
+    const updated = await prisma.examSession.update({
+      where: { id: req.params.id },
+      data: { submittedAt: new Date(), totalScore },
+      include: {
+        answers: {
+          include: {
+            question: { include: { answer: true } }
+          }
+        }
+      }
+    });
+
+    res.json(updated);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
 };
