@@ -3,7 +3,6 @@ const prisma = require('../services/prisma');
 exports.search = async (req, res) => {
   try {
     const { subjectId, type, year, round } = req.query;
-
     const exams = await prisma.exam.findMany({
       where: {
         subjectId,
@@ -74,6 +73,34 @@ exports.create = async (req, res) => {
   try {
     const exam = await prisma.exam.create({ data: req.body });
     res.status(201).json(exam);
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ بالسيرفر' });
+  }
+};
+
+exports.addQuestion = async (req, res) => {
+  try {
+    const { number, text, marks, chapter } = req.body;
+    const question = await prisma.question.create({
+      data: {
+        examId: req.params.id,
+        number, text, marks,
+        ...(chapter && { chapter })
+      }
+    });
+    res.status(201).json(question);
+  } catch (err) {
+    res.status(500).json({ error: 'خطأ بالسيرفر' });
+  }
+};
+
+exports.addModelAnswer = async (req, res) => {
+  try {
+    const { text, imageUrl } = req.body;
+    const answer = await prisma.modelAnswer.create({
+      data: { questionId: req.params.questionId, text, imageUrl }
+    });
+    res.status(201).json(answer);
   } catch (err) {
     res.status(500).json({ error: 'خطأ بالسيرفر' });
   }
