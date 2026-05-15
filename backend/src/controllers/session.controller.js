@@ -18,11 +18,14 @@ exports.start = async (req, res) => {
     if (exam.questions.length === 0)
       return res.status(400).json({ error: 'الامتحان لا يحتوي على أسئلة' });
 
-    // منع بدء جلسة جديدة إذا عنده جلسة مفتوحة
+    // حذف أي جلسة مفتوحة قديمة تلقائياً
     const openSession = await prisma.examSession.findFirst({
       where: { userId: req.user.id, examId, submittedAt: null }
     });
-    if (openSession) return res.status(400).json({ error: 'عندك جلسة مفتوحة لهذا الامتحان' });
+    if (openSession) {
+      await prisma.answer.deleteMany({ where: { sessionId: openSession.id } });
+      await prisma.examSession.delete({ where: { id: openSession.id } });
+    }
 
     const session = await prisma.examSession.create({
       data: {
@@ -61,7 +64,6 @@ exports.saveAnswer = async (req, res) => {
     if (studentAnswer && studentAnswer.length > 5000)
       return res.status(400).json({ error: 'الإجابة طويلة جداً' });
 
-    // تحقق إن الجلسة تخص المستخدم وما سلمت
     const session = await prisma.examSession.findFirst({
       where: { id: req.params.id, userId: req.user.id, submittedAt: null }
     });
