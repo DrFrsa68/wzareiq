@@ -181,3 +181,5 @@ const styles = StyleSheet.create({
   navBtnText: { color: colors.text, fontFamily: fonts.bold },
   nextBtnText: { color: colors.white, fontFamily: fonts.bold }
 });
+
+
