@@ -4,11 +4,11 @@
     "slug": "sawab",
     "version": "1.0.0",
     "scheme": "sawab",
-    "icon": "./assets/sawabicon.jpg",
+    "icon": "./assets/sawabicon.png",
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/sawabicon.jpg"
+      "favicon": "./assets/sawabicon.png"
     },
     "platforms": [
       "ios",
