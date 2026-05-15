@@ -28,6 +28,13 @@
     },
     "android": {
       "package": "com.sawab.app"
-    }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4a1f6981-db50-4271-87c8-3e6fb651b48d"
+    },
+    "ios": {}
   }
 }
