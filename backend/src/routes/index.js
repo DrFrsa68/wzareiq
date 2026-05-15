@@ -6,5 +6,6 @@ router.use('/auth', require('./auth.routes'));
 router.use('/subjects', require('./subject.routes'));
 router.use('/exams', require('./exam.routes'));
 router.use('/sessions', auth, require('./session.routes'));
+router.use('/admin', auth, admin, require('./admin.routes'));
 
 module.exports = router;
