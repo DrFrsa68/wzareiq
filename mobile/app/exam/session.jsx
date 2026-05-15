@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import api from '../../lib/api';
 import { colors, fonts } from '../../lib/theme';
@@ -28,15 +28,30 @@ export default function ExamSession() {
       await api.put(`/sessions/${sessionRef.current.id}/submit`);
       router.replace({ pathname: '/exam/result', params: { sessionId: sessionRef.current.id } });
     } catch (err) {
-      window.alert('فشل التسليم، حاول مرة ثانية');
+      if (Platform.OS === 'web') {
+        window.alert('فشل التسليم، حاول مرة ثانية');
+      } else {
+        Alert.alert('خطأ', 'فشل التسليم، حاول مرة ثانية');
+      }
       setSubmitting(false);
     }
   }, []);
 
   const handleSubmit = () => {
-    const confirm = window.confirm('هل تريد تسليم الامتحان؟');
-    if (!confirm) return;
-    handleSubmitDirect();
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm('هل تريد تسليم الامتحان؟');
+      if (!confirm) return;
+      handleSubmitDirect();
+    } else {
+      Alert.alert(
+        'تسليم الامتحان',
+        'هل أنت متأكد؟',
+        [
+          { text: 'إلغاء', style: 'cancel' },
+          { text: 'تسليم', onPress: handleSubmitDirect }
+        ]
+      );
+    }
   };
 
   useEffect(() => {
@@ -55,7 +70,11 @@ export default function ExamSession() {
           });
         }, 1000);
       } catch (err) {
-        window.alert('فشل بدء الامتحان');
+        if (Platform.OS === 'web') {
+          window.alert('فشل بدء الامتحان');
+        } else {
+          Alert.alert('خطأ', 'فشل بدء الامتحان');
+        }
         router.back();
       }
     };
