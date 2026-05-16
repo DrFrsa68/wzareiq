@@ -2,7 +2,9 @@ import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator } from 'react-native';
+import { useEffect } from 'react';
 import { colors } from '../lib/theme';
+import { useAuthStore } from '../store/auth.store';
 
 const queryClient = new QueryClient();
 
@@ -12,7 +14,13 @@ export default function RootLayout() {
     'IBMPlexArabic-Bold': require('../assets/fonts/IBMPlexArabic-Bold.ttf'),
   });
 
-  if (!fontsLoaded) return (
+  const { initialized, initAuth } = useAuthStore();
+
+  useEffect(() => {
+    if (!initialized) initAuth();
+  }, []);
+
+  if (!fontsLoaded || !initialized) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.primary }}>
       <ActivityIndicator color="#fff" size="large" />
     </View>
