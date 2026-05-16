@@ -6,8 +6,8 @@ const saveToStorage = async (key, value) => {
     if (Platform.OS === 'web') {
       localStorage.setItem(key, value);
     } else {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.setItem(key, value);
+      const SecureStore = require('expo-secure-store');
+      await SecureStore.setItemAsync(key, value);
     }
   } catch {}
 };
@@ -17,8 +17,8 @@ const getFromStorage = async (key) => {
     if (Platform.OS === 'web') {
       return localStorage.getItem(key);
     } else {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      return await AsyncStorage.getItem(key);
+      const SecureStore = require('expo-secure-store');
+      return await SecureStore.getItemAsync(key);
     }
   } catch { return null; }
 };
@@ -28,8 +28,8 @@ const removeFromStorage = async (key) => {
     if (Platform.OS === 'web') {
       localStorage.removeItem(key);
     } else {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.removeItem(key);
+      const SecureStore = require('expo-secure-store');
+      await SecureStore.deleteItemAsync(key);
     }
   } catch {}
 };
