@@ -18,7 +18,6 @@ exports.start = async (req, res) => {
     if (exam.questions.length === 0)
       return res.status(400).json({ error: 'الامتحان لا يحتوي على أسئلة' });
 
-    // حذف أي جلسة مفتوحة قديمة تلقائياً
     const openSession = await prisma.examSession.findFirst({
       where: { userId: req.user.id, examId, submittedAt: null }
     });
@@ -91,6 +90,9 @@ exports.submit = async (req, res) => {
         answers: {
           include: {
             question: { include: { answer: true } }
+          },
+          orderBy: {
+            question: { number: 'asc' }
           }
         }
       }
@@ -124,6 +126,9 @@ exports.submit = async (req, res) => {
         answers: {
           include: {
             question: { include: { answer: true } }
+          },
+          orderBy: {
+            question: { number: 'asc' }
           }
         }
       }
@@ -163,6 +168,9 @@ exports.getResult = async (req, res) => {
         answers: {
           include: {
             question: { include: { answer: true } }
+          },
+          orderBy: {
+            question: { number: 'asc' }
           }
         }
       }
