@@ -23,54 +23,80 @@ export default function Result() {
   if (loading) return (
     <View style={styles.loading}>
       <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={styles.loadingText}>جاري تحميل النتيجة...</Text>
     </View>
   );
 
   const totalMarks = session.answers.reduce((sum, a) => sum + a.question.marks, 0);
-  const scored = session.answers.reduce((sum, a) => sum + (a.aiScore || 0), 0);
+  const scored = Math.round(session.answers.reduce((sum, a) => sum + (a.aiScore || 0), 0));
   const percent = totalMarks > 0 ? Math.round((scored / totalMarks) * 100) : 0;
+
+  const getPercentColor = () => {
+    if (percent >= 80) return colors.success;
+    if (percent >= 50) return '#F59E0B';
+    return colors.error;
+  };
+
+  const getPercentLabel = () => {
+    if (percent >= 80) return 'ممتاز 🌟';
+    if (percent >= 70) return 'جيد جداً 👍';
+    if (percent >= 60) return 'جيد ✓';
+    if (percent >= 50) return 'مقبول';
+    return 'راجع مرة ثانية 📚';
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ alignItems: 'center' }}>
       <View style={[styles.header, { width: '100%' }]}>
         <Text style={styles.subject}>{session.exam.subject?.name}</Text>
-        <Text style={[styles.title, { fontSize: isTablet ? 28 : 22 }]}>نتيجة الامتحان</Text>
-        <View style={styles.scoreCircle}>
-          <Text style={[styles.scoreNum, { fontSize: isTablet ? 64 : 48 }]}>{scored}</Text>
+        <Text style={styles.title}>نتيجة الامتحان</Text>
+        <View style={[styles.scoreCircle, { borderColor: getPercentColor() }]}>
+          <Text style={[styles.scoreNum, { fontSize: isTablet ? 56 : 44, color: getPercentColor() }]}>{scored}</Text>
           <Text style={styles.scoreTotal}>/ {totalMarks}</Text>
         </View>
-        <Text style={[styles.percent, { fontSize: isTablet ? 24 : 18 }]}>{percent}%</Text>
+        <Text style={[styles.percent, { color: getPercentColor() }]}>{percent}%</Text>
+        <Text style={styles.percentLabel}>{getPercentLabel()}</Text>
       </View>
 
       <View style={[styles.body, { maxWidth, width: '100%' }]}>
+        <Text style={styles.sectionTitle}>تفاصيل الإجابات</Text>
         {session.answers.map((a, i) => (
-          <View key={a.id} style={styles.answerCard}>
+          <View key={a.id} style={[styles.answerCard, { borderRightColor: a.aiScore >= a.question.marks * 0.5 ? colors.success : colors.error }]}>
             <View style={styles.answerHeader}>
-              <Text style={styles.answerScore}>{a.aiScore || 0} / {a.question.marks}</Text>
+              <View style={[styles.scoreBadge, { backgroundColor: (a.aiScore || 0) >= a.question.marks * 0.5 ? colors.success + '20' : colors.error + '20' }]}>
+                <Text style={[styles.answerScore, { color: (a.aiScore || 0) >= a.question.marks * 0.5 ? colors.success : colors.error }]}>
+                  {a.aiScore || 0} / {a.question.marks}
+                </Text>
+              </View>
               <Text style={styles.answerNum}>السؤال {i + 1}</Text>
             </View>
-            <Text style={[styles.questionText, { fontSize: isTablet ? 17 : 15 }]}>{a.question.text}</Text>
 
-            <Text style={styles.label}>إجابتك:</Text>
-            <Text style={styles.studentAnswer}>{a.studentAnswer || 'لم تجب'}</Text>
+            <Text style={[styles.questionText, { fontSize: isTablet ? 16 : 14 }]}>{a.question.text}</Text>
 
-            <Text style={styles.label}>الإجابة النموذجية:</Text>
-            <Text style={styles.modelAnswer}>{a.question.answer?.text || 'غير متوفرة'}</Text>
+            <View style={styles.answerSection}>
+              <Text style={styles.label}>إجابتك</Text>
+              <Text style={[styles.studentAnswer, !a.studentAnswer && styles.noAnswer]}>
+                {a.studentAnswer || 'لم تجب على هذا السؤال'}
+              </Text>
+            </View>
+
+            <View style={styles.answerSection}>
+              <Text style={styles.label}>الإجابة النموذجية</Text>
+              <Text style={styles.modelAnswer}>{a.question.answer?.text || 'غير متوفرة'}</Text>
+            </View>
 
             {a.aiFeedback && (
-              <>
-                <Text style={styles.label}>تحليل الذكاء الاصطناعي:</Text>
+              <View style={styles.answerSection}>
+                <Text style={styles.label}>تحليل الذكاء الاصطناعي</Text>
                 <Text style={styles.aiFeedback}>{a.aiFeedback}</Text>
-              </>
+              </View>
             )}
           </View>
         ))}
 
-        <View style={styles.btns}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/subjects')}>
-            <Text style={styles.backBtnText}>العودة للمواد</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/subjects')}>
+          <Text style={styles.backBtnText}>العودة للمواد</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -78,25 +104,30 @@ export default function Result() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: colors.primary, paddingTop: 60, paddingBottom: 32, alignItems: 'center' },
-  subject: { color: colors.primaryLight, fontSize: 14, marginBottom: 4, fontFamily: fonts.regular },
-  title: { fontFamily: fonts.bold, color: colors.white, marginBottom: 20 },
-  scoreCircle: { flexDirection: 'row', alignItems: 'flex-end', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 60, paddingHorizontal: 24, paddingVertical: 16 },
-  scoreNum: { fontFamily: fonts.bold, color: colors.white },
-  scoreTotal: { fontSize: 20, color: colors.primaryLight, marginBottom: 8, marginLeft: 4, fontFamily: fonts.regular },
-  percent: { color: colors.white, marginTop: 8, fontFamily: fonts.bold },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { color: colors.textMuted, fontFamily: fonts.regular },
+  header: { backgroundColor: colors.white, paddingTop: 60, paddingBottom: 32, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border },
+  subject: { color: colors.textMuted, fontSize: 13, marginBottom: 4, fontFamily: fonts.regular },
+  title: { fontFamily: fonts.bold, color: colors.text, fontSize: 20, marginBottom: 20 },
+  scoreCircle: { width: 140, height: 140, borderRadius: 70, borderWidth: 4, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', alignItems: 'flex-end', paddingBottom: 16 },
+  scoreNum: { fontFamily: fonts.bold },
+  scoreTotal: { fontSize: 18, color: colors.textMuted, marginBottom: 4, marginLeft: 4, fontFamily: fonts.regular },
+  percent: { fontSize: 28, marginTop: 12, fontFamily: fonts.bold },
+  percentLabel: { fontSize: 14, color: colors.textMuted, fontFamily: fonts.regular, marginTop: 4 },
   body: { padding: 16, alignSelf: 'center' },
-  answerCard: { backgroundColor: colors.white, borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  answerHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  answerNum: { fontSize: 14, color: colors.textSecondary, fontFamily: fonts.regular },
-  answerScore: { fontSize: 14, fontFamily: fonts.bold, color: colors.primary },
-  questionText: { color: colors.text, textAlign: 'right', marginBottom: 12, fontFamily: fonts.regular },
-  label: { fontSize: 12, color: colors.textMuted, textAlign: 'right', marginBottom: 4, fontFamily: fonts.regular },
-  studentAnswer: { fontSize: 14, color: colors.text, textAlign: 'right', backgroundColor: colors.background, padding: 10, borderRadius: 8, marginBottom: 10, fontFamily: fonts.regular },
-  modelAnswer: { fontSize: 14, color: colors.success, textAlign: 'right', backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8, marginBottom: 10, fontFamily: fonts.regular },
-  aiFeedback: { fontSize: 14, color: colors.primary, textAlign: 'right', backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, fontFamily: fonts.regular },
-  btns: { gap: 12, marginBottom: 40, marginTop: 8 },
-  backBtn: { backgroundColor: colors.primary, borderRadius: 12, padding: 16, alignItems: 'center' },
-  backBtnText: { color: colors.white, fontSize: 16, fontFamily: fonts.bold }
+  sectionTitle: { fontFamily: fonts.bold, fontSize: 17, color: colors.text, textAlign: 'right', marginBottom: 12, marginTop: 4 },
+  answerCard: { backgroundColor: colors.white, borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderRightWidth: 4 },
+  answerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  answerNum: { fontSize: 13, color: colors.textMuted, fontFamily: fonts.regular },
+  scoreBadge: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
+  answerScore: { fontSize: 14, fontFamily: fonts.bold },
+  questionText: { color: colors.text, textAlign: 'right', marginBottom: 12, fontFamily: fonts.regular, lineHeight: 24 },
+  answerSection: { marginBottom: 10 },
+  label: { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginBottom: 4, fontFamily: fonts.regular },
+  studentAnswer: { fontSize: 14, color: colors.text, textAlign: 'right', backgroundColor: '#f8f9fa', padding: 10, borderRadius: 10, fontFamily: fonts.regular },
+  noAnswer: { color: colors.textMuted, fontStyle: 'italic' },
+  modelAnswer: { fontSize: 14, color: colors.success, textAlign: 'right', backgroundColor: '#f0fdf4', padding: 10, borderRadius: 10, fontFamily: fonts.regular },
+  aiFeedback: { fontSize: 13, color: colors.primary, textAlign: 'right', backgroundColor: '#eff6ff', padding: 10, borderRadius: 10, fontFamily: fonts.regular },
+  backBtn: { backgroundColor: colors.primary, borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 8, marginBottom: 40 },
+  backBtnText: { color: colors.white, fontSize: 16, fontFamily: fonts.bold },
 });
