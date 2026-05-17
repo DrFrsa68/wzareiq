@@ -5,6 +5,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { useEffect } from 'react';
 import { colors } from '../lib/theme';
 import { useAuthStore } from '../store/auth.store';
+import { registerForPushNotifications } from '../lib/notifications';
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!initialized) initAuth();
+    registerForPushNotifications().then(token => {
+      if (token) console.log('Push token:', token);
+    });
   }, []);
 
   if (!fontsLoaded || !initialized) return (
