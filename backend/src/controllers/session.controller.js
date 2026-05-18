@@ -1,5 +1,6 @@
 const prisma = require('../services/prisma');
 const { gradeAnswer } = require('../services/ai.service');
+const { sendToUser } = require('../services/notification.service');
 
 const VALID_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -133,6 +134,15 @@ exports.submit = async (req, res) => {
         }
       }
     });
+
+    // إرسال إشعار للطالب
+    const totalMarks = updated.answers.reduce((s, a) => s + a.question.marks, 0);
+    await sendToUser(
+      req.user.id,
+      'نتيجة امتحانك جاهزة! 🎉',
+      `حصلت على ${Math.round(totalScore)} من ${totalMarks} درجة`,
+      { sessionId: req.params.id }
+    );
 
     res.json(updated);
   } catch (err) {
