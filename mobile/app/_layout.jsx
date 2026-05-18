@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { colors } from '../lib/theme';
 import { useAuthStore } from '../store/auth.store';
 import { registerForPushNotifications } from '../lib/notifications';
+import api from '../lib/api';
 
 const queryClient = new QueryClient();
 
@@ -18,10 +19,17 @@ export default function RootLayout() {
   const { initialized, initAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!initialized) initAuth();
-    registerForPushNotifications().then(token => {
-      if (token) console.log('Push token:', token);
-    });
+    if (!initialized) {
+      initAuth().then(() => {
+        registerForPushNotifications().then(async token => {
+          if (token) {
+            try {
+              await api.post('/auth/push-token', { token });
+            } catch {}
+          }
+        });
+      });
+    }
   }, []);
 
   if (!fontsLoaded || !initialized) return (
